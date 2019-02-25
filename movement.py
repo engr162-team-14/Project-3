@@ -75,17 +75,18 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
-                dps_l = -(speed_l * (360/(7* math.pi))) 
-                dps_r = -(speed_r * (360/(7* math.pi)))         
-
-                 BP.set_motor_dps(BP.PORT_B, dps_l)   
-                 BP.set_motor_dps(BP.PORT_C, dps_r)
+            dps_l = -(speed_l * (360/(7* math.pi))) 
+            dps_r = -(speed_r * (360/(7* math.pi)))         
+            
+            BP.set_motor_dps(BP.PORT_B, dps_l)   
+            BP.set_motor_dps(BP.PORT_C, dps_r)
+            
           else:
-                  dps_l = (speed_l * (360/(7* math.pi))) 
-                  dps_r = (speed_r * (360/(7* math.pi)))         
+            dps_l = (speed_l * (360/(7* math.pi))) 
+            dps_r = (speed_r * (360/(7* math.pi)))         
 
-                   BP.set_motor_dps(BP.PORT_C, dps_l)   
-                  BP.set_motor_dps(BP.PORT_B, dps_r)
+            BP.set_motor_dps(BP.PORT_C, dps_l)   
+            BP.set_motor_dps(BP.PORT_B, dps_r)
 
     except Exception as error: 
         print("setSpeed:",error)
