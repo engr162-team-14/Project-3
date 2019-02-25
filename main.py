@@ -1,8 +1,7 @@
-#libraries
 import time     
 import brickpi3  
 import grovepi  
-import time
+
 
 #functional tests
 def calibrate(BP):
