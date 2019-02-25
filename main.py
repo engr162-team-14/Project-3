@@ -6,6 +6,7 @@ import time
 
 #functional tests
 def calibrate(BP):
+    pass
 
 
 if __name__ == '__main__':
