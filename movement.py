@@ -80,8 +80,8 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
             
             BP.set_motor_dps(BP.PORT_B, dps_l)   
             BP.set_motor_dps(BP.PORT_C, dps_r)
-            
-          else:
+
+        else:
             dps_l = (speed_l * (360/(7* math.pi))) 
             dps_r = (speed_r * (360/(7* math.pi)))         
 
