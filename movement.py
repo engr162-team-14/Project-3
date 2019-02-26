@@ -48,7 +48,7 @@ def gyroCalib(BP):
             time.sleep(0.02)  
 
     except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
-        BP.reset_all()  
+        BP.reset_all() 
 
 def speedControl(BP,speed,distance):
     try:
@@ -90,5 +90,47 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
 
     except Exception as error: 
         print("setSpeed:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def turn_simple(BP,deg):
+    try:
+        if deg > 0:
+            while gyroVal(BP) < deg:
+                setSpeed(BP,5,0)
+        else:
+            while gyroVal(BP) > deg:
+                 setSpeed(BP,5,0)
+        setSpeed(BP,0,0)
+    except Exception as error: 
+        print("turn_simple:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def turn_p(BP,deg,k):
+    try:
+        ang_delt = -1
+        if deg > 0:
+            while ang_delt != 0:
+                ang_delt = deg - gyroVal(BP)
+                setSpeed(BP,k * (ang_delt),0)
+        else:
+            while ang_delt != 0:
+                ang_delt = gyroVal(BP) - deg
+                setSpeed(BP,k * (ang_delt),0)
+        setSpeed(BP,0,0)
+    except Exception as error: 
+        print("turn_p:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def wall_avoid(BP,min_dist,speed,k):
+    try:
+        while True:
+            ultras_sens = []
+            if ultras_sens[0] 
+
+    except Exception as error: 
+        print("wall_avoid:",error)
     except KeyboardInterrupt:
         stop(BP)
