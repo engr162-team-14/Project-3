@@ -49,8 +49,6 @@ def imuOut(width=1, depth=100, dly=0.01, adv = True, pick = 1):
         std=FindSTD(biases,mpu9250,dly)
         count = 3 #Number of standard deviations used for filtering
 
-        t0=time.time()
-
         try:
                 if pick == 1:
                         accel = mpu9250.readAccel()
@@ -99,5 +97,4 @@ def getGyroVals():
         gyro[1] = out[4]
         gyro[2] = out[5]
         return gyro
-
 
