@@ -37,6 +37,17 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     except KeyboardInterrupt:
         stop(BP)
 
+def IMUTest():
+    try:
+        while True:
+            out = IMUfilter.imuOut()
+            print(out)
+
+    except Exception as error: 
+        print("IMUTest:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
 def balance(BP,KP,KI,KD):
     try:
         # KP = 0.0 # proportional control gain
@@ -75,6 +86,6 @@ def balance(BP,KP,KI,KD):
             e_prev = e                                # save error for this step; needed for D
             time.sleep(dT)
     except Exception as error: 
-        print("turn_p:",error)
+        print("balance:",error)
     except KeyboardInterrupt:
         stop(BP)
