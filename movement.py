@@ -128,6 +128,8 @@ def wall_avoid(BP,min_dist,speed,k):
     try:
         while True:
             ultras_sens = []
+            if ultras_sens[0] < min_dist:
+                pass
 
     except Exception as error: 
         print("wall_avoid:",error)
