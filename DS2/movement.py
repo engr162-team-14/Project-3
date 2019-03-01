@@ -161,7 +161,8 @@ def balance(BP,imu_calib,KP,KI,KD):
         D = 0
         e_prev = 0
         while True:
-            target_pos = getGyroFilterVals(imu_calib)          # get current x,y,z axis gyro pos
+            gyro_vals = getGyroFilterVals(imu_calib)          # get current x,y,z axis gyro pos
+            target_pos = [dT * gyro_vals[0],dT * gyro_vals[0]]
 
             current_pos = [BP.get_motor_encoder(BP.PORT_A),BP.get_motor_encoder(BP.PORT_B)] # get current motor position
 
