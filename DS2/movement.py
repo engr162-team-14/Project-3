@@ -162,14 +162,14 @@ def balance(BP,imu_calib,KP,KI,KD):
         e_prev = 0
         while True:
             gyro_vals = getGyroFilterVals(imu_calib)          # get current x,y,z axis gyro pos
-            target_pos = [dT * gyro_vals[0],dT * gyro_vals[0]]
+            target_pos = [dT * gyro_vals[1],dT * gyro_vals[2]]
 
-            current_pos = [BP.get_motor_encoder(BP.PORT_A),BP.get_motor_encoder(BP.PORT_B)] # get current motor position
+            current_pos = [BP.get_motor_encoder(BP.PORT_A),BP.get_motor_encoder(BP.PORT_B)] # get current motor position (y-axis, z-axis)
 
-            print("current position: x - " + str(current_pos[0]) + " | y - " + str(current_pos[1]))
+            print("current position: y - " + str(current_pos[0]) + " | z - " + str(current_pos[2]))
 
             e = [target_pos[0] - current_pos[0], target_pos[1] - current_pos[1]]# error
-            print("error is  x - " + str(e[0]) + " | y - " + str(e[1]))
+            print("error is  y - " + str(e[0]) + " | z - " + str(e[1]))
 
             # set up P,I,D, terms for control inputs
             P = [KP * e[0], KP * e[1]]
@@ -177,10 +177,10 @@ def balance(BP,imu_calib,KP,KI,KD):
             D = [KD * (e[0] - e_prev)/ dT, KD * (e[1] - e_prev)/ dT]
 
             # control input for motor
-            power_in_x = P[0] + I[0] + D[0]
-            power_in_y = P[1] + I[1] + D[1]
-            BP.set_motor_power(BP.PORT_A, power_in_x)
-            BP.set_motor_power(BP.PORT_B, power_in_y)
+            power_in_y = P[0] + I[0] + D[0]
+            power_in_z = P[1] + I[1] + D[1]
+            BP.set_motor_power(BP.PORT_A, power_in_y)
+            BP.set_motor_power(BP.PORT_B, power_in_z)
 
             e_prev = e                                # save error for this step; needed for D
             time.sleep(dT)
