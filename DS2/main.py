@@ -5,7 +5,7 @@ import movement
 
 
 #functional tests
-def calibrate(): 
+def calibrate(BP): 
     calib = movement.imuCalib()
     imu_calib = {
         "mpu": calib[0],
