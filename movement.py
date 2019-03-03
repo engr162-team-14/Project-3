@@ -159,7 +159,7 @@ def pt_2_pt2 (BP, x1, x2, y1, y2):
         if
         speedControl(BP, 6, veci)
         turn_pi(BP, )
-        
+
     except Exception as error: 
         print("pt_2_pt2",error)
     except KeyboardInterrupt:
@@ -181,7 +181,7 @@ ki = .7
 kd = .1
 
 error = set - curr
-integ = integ + (dt * error * .5)                   #triangular approx
+integ = integ + (dt * error * .5)                    #triangular approx
 integ = integ + (dt * (error + error_p)/2)           #trapezoidal approx
 deriv = (error - error_p)/dt
 
