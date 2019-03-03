@@ -7,7 +7,7 @@ import movement
 import sensors
 
 from enum import Enum, auto
-from MPU9250 import MPU9250
+
 
 class Sensor(Enum):
     LEFT = auto()
@@ -67,8 +67,8 @@ def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,sensor = Sensor.RIGHT):
             while errors[0] <= 0 and errors[1] >= -5 and errors[2] >= -5:
                 errors = np.subtract(set_dists, **ultra_sens(....)**)
                 integ = np.add(integ, (np.multiply(dt, np.divide(np.add(error, error_p), 2))))              
-                deriv = np.divide(np.subtract(error, error_p), dt)
-                output  = np.add(np.add(np.multiply(kp, error), np.multiply(ki, integ)), np.multiply(kd, deriv))
+                #deriv = np.divide(np.subtract(error, error_p), dt)
+                output  = np.add(np.multiply(kp, error), np.multiply(ki, integ))
                 errors_p = errors
 
                 if sens == Sensor.RIGHT:
@@ -83,8 +83,6 @@ def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,sensor = Sensor.RIGHT):
             #check for junction cases
             
             
-                
-
     except Exception as error: 
         print("maze_nav_pi:",error)
     except KeyboardInterrupt:
