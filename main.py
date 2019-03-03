@@ -1,6 +1,7 @@
 import time     
 import brickpi3  
 import grovepi  
+import numpy as np
 
 import movement
 import sensors
@@ -24,6 +25,28 @@ def calibrate(BP):
         "std": calib[7]
     }
     return imu_calib
+
+def maze_nav_pi(BP,set_dists,speed,k):
+    try:
+        error = -1
+        error_p = 0
+        integ = 0
+        dt = .1
+
+        while True:
+            errors = np.subtract(set_dists - ultra_sens(...))
+                        
+            integ = integ + (dt * (error + error_p)/2)                #trapezoidal approx
+            deriv = (error - error_p)/dt
+            output  = (kp * error) + (ki * integral)  + (kd * deriv)
+            error_p = error
+            
+                
+
+    except Exception as error: 
+        print("maze_nav_pi:",error)
+    except KeyboardInterrupt:
+        stop(BP)
 
 
 

@@ -69,50 +69,35 @@ def turn_simple(BP,deg):
     try:
         if deg > 0:
             while gyroVal(BP) < deg:
-                setSpeed(BP,5,-5)
+                setSpeed(BP,-5,5)    #MAKE SURE TO CHECK WHICH WAY IS + on gyro
         else:
             while gyroVal(BP) > deg:
-                 setSpeed(BP,-5,5)
+                setSpeed(BP,5,-5)
         setSpeed(BP,0,0)
     except Exception as error: 
         print("turn_simple:",error)
     except KeyboardInterrupt:
         stop(BP)
 
-def turn_pi(BP,deg,kp,ki):
+def turn_pi(BP,target_deg,kp = .7,ki = .3):
     try:
         error = -1
         error_p = 0
         integ = 0
         dt = .1
         
-        while error != 0:
-            error = deg - gyroVal(BP)
-            integ = integ + (dt * (error + error_p)/2)
-            output = kp * (error) + ki * (integ)
+        while  error != 0:
+            error = target_deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
+            integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
+            output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
             
-            if(deg > 0):
-                setSpeed(BP,output,-output)
-            else:
-                setSpeed(BP,-output,output)
+            setSpeed(BP,-output,output)  #MAKE SURE TO CHECK WHICH WAY IS + on gyro
             time.sleep(dt)
                 
         setSpeed(BP,0,0)
     except Exception as error: 
         print("turn_pi:",error)
-    except KeyboardInterrupt:
-        stop(BP)
-
-def wall_avoid_pi(BP,min_dist,speed,k):
-    try:
-        while True:
-            ultras_sens = []
-            if ultras_sens[0] < min_dist:
-                pass
-
-    except Exception as error: 
-        print("wall_avoid:",error)
     except KeyboardInterrupt:
         stop(BP)
 
