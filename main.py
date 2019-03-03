@@ -6,7 +6,33 @@ import numpy as np
 import movement
 import sensors
 
+from enum import Enum, auto
 from MPU9250 import MPU9250
+
+class Sensor(Enum):
+    LEFT = auto()
+    RIGHT = auto()
+    FRONT = auto()
+
+class State(Enum):
+    WALL = auto()
+    EXPL = auto()
+    UNEXPL = auto()
+
+class Surrounding:
+    def __init__(self, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL):
+        self.up = up
+        self.down = down
+        self.left = left
+        self.right = right
+    def get_up(self):
+        return self.up
+    def get_down(self):
+        return self.down
+    def get_left(self):
+        return self.left
+    def get_right(self):
+        return self.right    
 
 
 #functional tests
@@ -26,27 +52,44 @@ def calibrate(BP):
     }
     return imu_calib
 
-def maze_nav_pi(BP,set_dists,speed,k):
+def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,sensor = Sensor.RIGHT):
+    #set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]
     try:
-        error = -1
-        error_p = 0
-        integ = 0
+        errors = [-1,1,1]
+        errors_p = [0,0,0]
+        integs = [0,0,0]
+        surr = Surrounding()
         dt = .1
 
+        #may need to clean this up
         while True:
-            errors = np.subtract(set_dists - ultra_sens(...))
-                        
-            integ = integ + (dt * (error + error_p)/2)                #trapezoidal approx
-            deriv = (error - error_p)/dt
-            output  = (kp * error) + (ki * integral)  + (kd * deriv)
-            error_p = error
+            #                     need to define   v      and          v
+            # center robot when trvl corridors
+            while errors[0] <= 0 and errors[1] >= -5 and errors[2] >= -5:
+                errors = np.subtract(set_dists, **ultra_sens(....)**)
+                integ = np.add(integ, (np.multiply(dt, np.divide(np.add(error, error_p), 2))))              
+                deriv = np.divide(np.subtract(error, error_p), dt)
+                output  = np.add(np.add(np.multiply(kp, error), np.multiply(ki, integ)), np.multiply(kd, deriv))
+                errors_p = errors
+
+                if sens == Sensor.RIGHT:
+                    #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
+                    #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
+                    movement.setSpeed(BP, speed - output[2], speed + output[2])  
+                else:
+                    #apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
+                    #apprch left wall --> negative error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
+                    movement.setSpeed(BP, speed + output[1], speed - output[1]) 
+            
+            #check for junction cases
+            
             
                 
 
     except Exception as error: 
         print("maze_nav_pi:",error)
     except KeyboardInterrupt:
-        stop(BP)
+        movement.stop(BP)
 
 
 
