@@ -34,7 +34,6 @@ class Surrounding:
     def get_right(self):
         return self.right    
 
-
 #functional tests
 def calibrate(BP):
     sensors.gyroCalib(BP)
