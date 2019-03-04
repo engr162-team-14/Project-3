@@ -31,7 +31,7 @@ def calibrate(BP):
     return imu_calib
 
 def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
-    #set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]
+    '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
         errors_p = [0,0,0]
@@ -84,6 +84,8 @@ def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor =
             #4 way intersection
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 movement.turnPi(BP, 90)
+            else:
+                print("I don't know what to do. WTF ZACH!!!")
 
             movement.speedControl(BP,speed,exit_dist)
             time.sleep(.1)
