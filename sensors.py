@@ -135,7 +135,7 @@ def getGyroFilterVals(imu_calib):
     out = imuFiltered(imu_calib)
     return [out[3],out[4],out[5]]
 
-def IMUTest(BP):
+def IMUTest():
     try:
         mpu9250 = MPU9250()
         while True:
@@ -144,3 +144,8 @@ def IMUTest(BP):
 
     except Exception as error: 
         print("IMUTest:",error)
+
+def getUltras(port_f=0,port_l=0,port_r=0):
+    return [grovepi.ultrasonicRead(port_f),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+
+    
