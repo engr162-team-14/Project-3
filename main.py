@@ -30,7 +30,7 @@ def calibrate(BP):
     }
     return imu_calib
 
-def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
+def maze_nav(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
