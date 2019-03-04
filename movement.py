@@ -10,11 +10,12 @@ from sensors import imuCalib
 from sensors import imuFiltered
 from sensors import getGyroFilterVals
 from sensors import IMUTest
+from sensors import getUltras
 
 
 def stop(BP):
-    BP.set_motor_dps(BP.PORT_C, 0)   
     BP.set_motor_dps(BP.PORT_B, 0)
+    BP.set_motor_dps(BP.PORT_C, 0)   
     BP.offset_motor_encoder(BP.PORT_B, BP.get_motor_encoder(BP.PORT_B))
     BP.offset_motor_encoder(BP.PORT_C, BP.get_motor_encoder(BP.PORT_C))
 
@@ -27,15 +28,15 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
-            dps_l = -(speed_l * (360/(7* math.pi))) 
-            dps_r = -(speed_r * (360/(7* math.pi)))         
+            dps_l = (speed_l * (360/(7* math.pi)))
+            dps_r = (speed_r * (360/(7* math.pi)))         
             
             BP.set_motor_dps(BP.PORT_B, dps_l)   
             BP.set_motor_dps(BP.PORT_C, dps_r)
 
         else:
-            dps_l = (speed_l * (360/(7* math.pi))) 
-            dps_r = (speed_r * (360/(7* math.pi)))         
+            dps_l = -(speed_l * (360/(7* math.pi))) 
+            dps_r = -(speed_r * (360/(7* math.pi)))         
 
             BP.set_motor_dps(BP.PORT_C, dps_l)   
             BP.set_motor_dps(BP.PORT_B, dps_r)
@@ -65,11 +66,11 @@ def speedControl(BP,speed,distance):
     except KeyboardInterrupt:
         stop(BP)
 
-def turn_simple(BP,deg):
+def turnSimple(BP,deg):
     try:
         if deg > 0:
             while gyroVal(BP) < deg:
-                setSpeed(BP,-5,5)    #MAKE SURE TO CHECK WHICH WAY IS + on gyro
+                setSpeed(BP,5,-5)   
         else:
             while gyroVal(BP) > deg:
                 setSpeed(BP,5,-5)
@@ -79,8 +80,9 @@ def turn_simple(BP,deg):
     except KeyboardInterrupt:
         stop(BP)
 
-def turn_pi(BP,target_deg,kp = .7,ki = .3):
+def turnPi(BP,deg,kp = .7,ki = .3):
     try:
+        target_deg = gyroVal(BP) + deg
         error = -1
         error_p = 0
         integ = 0
@@ -92,7 +94,7 @@ def turn_pi(BP,target_deg,kp = .7,ki = .3):
             output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
             
-            setSpeed(BP,-output,output)  #MAKE SURE TO CHECK WHICH WAY IS + on gyro
+            setSpeed(BP,output,-output)  
             time.sleep(dt)
                 
         setSpeed(BP,0,0)
@@ -101,7 +103,29 @@ def turn_pi(BP,target_deg,kp = .7,ki = .3):
     except KeyboardInterrupt:
         stop(BP)
 
-def get_angle (x1, y1, x2, y2):
+def turnPiAbs(BP,deg,kp = .7,ki = .3):
+    try:
+        error = -1
+        error_p = 0
+        integ = 0
+        dt = .1
+        
+        while  error != 0:
+            error = deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
+            integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
+            output = kp * (error) + ki * (integ)        #PI feedback response
+            error_p = error
+            
+            setSpeed(BP,output,-output)  
+            time.sleep(dt)
+                
+        setSpeed(BP,0,0)
+    except Exception as error: 
+        print("turn_pi:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def getAngle (x1, y1, x2, y2):
     try:
         veci = x2 - x1
         vecj = y2 - y1
@@ -111,7 +135,7 @@ def get_angle (x1, y1, x2, y2):
     except Exception as error: 
         print("angle",error)
 
-def get_distance (x1, y1, x2, y2):
+def getDistance (x1, y1, x2, y2):
     try:
 	    veci = x2 - x1
 	    vecj = y2 - y1
@@ -121,30 +145,39 @@ def get_distance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, angle, distance):
+def pt_2_pt (BP, speed, angle, distance):
     try:
-        turn_pi(BP, angle, .3, .7)
+        turnPiAbs(BP, angle, .3, .7)
         
-        #speedControl(BP,speed,distance)
-        traveled = 0
-        while (distance - traveled != 0):
-            dt = .1
-            speed = setSpeed(BP, 6, 6)
-            time.sleep(dt)
-            traveled = traveled + speed * dt
+        speedControl(BP,speed,distance)
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
-        
+
+#funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components      
 def pt_2_pt2 (BP, x1, x2, y1, y2):
     try:
         veci = x2 - x1
         vecj = y2 - y1
-        if
-        speedControl(BP, 6, veci)
-        turn_pi(BP, )
-
+        if(veci < 0):
+            turnPiAbs(BP, 90)
+            speedControl(BP, 6, abs(veci))
+            if(vecj < 0):
+                turnPiAbs(BP, )
+                speedControl(BP, 6, abs(vecj))
+            else:
+                turnPiAbs(BP, 0)
+                speedControl(BP, 6, abs(vecj))
+        else:
+            turnPiAbs(BP, 270)
+            speedControl(BP, 6, abs(veci))
+            if(vecj < 0):
+                turnPiAbs(BP, 180)
+                speedControl(BP, 6, abs(vecj))
+            else:
+                turnPiAbs(BP, 0)
+                speedControl(BP, 6, abs(vecj))
     except Exception as error: 
         print("pt_2_pt2",error)
     except KeyboardInterrupt:

@@ -8,31 +8,10 @@ import sensors
 
 from enum import Enum, auto
 
-
 class Sensor(Enum):
     LEFT = auto()
     RIGHT = auto()
-    FRONT = auto()
-
-class State(Enum):
-    WALL = auto()
-    EXPL = auto()
-    UNEXPL = auto()
-
-class Surrounding:
-    def __init__(self, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL):
-        self.up = up
-        self.down = down
-        self.left = left
-        self.right = right
-    def get_up(self):
-        return self.up
-    def get_down(self):
-        return self.down
-    def get_left(self):
-        return self.left
-    def get_right(self):
-        return self.right    
+    FRONT = auto()  
 
 #functional tests
 def calibrate(BP):
@@ -51,38 +30,66 @@ def calibrate(BP):
     }
     return imu_calib
 
-def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,sensor = Sensor.RIGHT):
-    #set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]
+def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
+    '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
         errors_p = [0,0,0]
         integs = [0,0,0]
-        surr = Surrounding()
         dt = .1
 
-        #may need to clean this up
         while True:
-            #                     need to define   v      and          v
+            #                     need to define       v      and                v
             # center robot when trvl corridors
-            while errors[0] <= 0 and errors[1] >= -5 and errors[2] >= -5:
-                errors = np.subtract(set_dists, **ultra_sens(....)**)
-                integ = np.add(integ, (np.multiply(dt, np.divide(np.add(error, error_p), 2))))              
+            while errors[0] <= 0 and errors[1] >= -bfr_dist and errors[2] >= -bfr_dist:
+                errors = np.subtract(set_dists, sensors.getUltras(0,0,0))
+                integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))              
                 #deriv = np.divide(np.subtract(error, error_p), dt)
-                output  = np.add(np.multiply(kp, error), np.multiply(ki, integ))
+                outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
 
-                if sens == Sensor.RIGHT:
+                if sensor == Sensor.RIGHT:
                     #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
                     #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
-                    movement.setSpeed(BP, speed - output[2], speed + output[2])  
+                    movement.setSpeed(BP, speed - outputs[2], speed + outputs[2])  
                 else:
                     #apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
                     #apprch left wall --> negative error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
-                    movement.setSpeed(BP, speed + output[1], speed - output[1]) 
-            
+                    movement.setSpeed(BP, speed + outputs[1], speed - outputs[1]) 
+                time.sleep(.1)
+
+            movement.setSpeed(BP,0,0)
             #check for junction cases
-            
-            
+            cur_front = sensors.getUltras()[0]
+            cur_left = sensors.getUltras()[1]
+            cur_right = sensors.getUltras()[2]
+            #dead end
+            if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                movement.turnPi(BP,180)
+            #left option only
+            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                movement.turnPi(BP,-90)
+            #right option only
+            elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                movement.turnPi(BP,90)
+            #right and left options
+            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                movement.turnPi(BP, 90)
+            #left and forward
+            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                pass
+            #right and forward
+            elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                movement.turnPi(BP, 90)
+            #4 way intersection
+            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                movement.turnPi(BP, 90)
+            else:
+                print("I don't know what to do. WTF ZACH!!!")
+
+            movement.speedControl(BP,speed,exit_dist)
+            time.sleep(.1)
+         
     except Exception as error: 
         print("maze_nav_pi:",error)
     except KeyboardInterrupt:
@@ -93,3 +100,4 @@ def maze_nav_pi(BP,speed,set_dists,kp,ki,kd,sensor = Sensor.RIGHT):
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
+    

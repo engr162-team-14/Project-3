@@ -13,6 +13,7 @@ class State(Enum):
 
 class Map:
     def __init__(self,):
+        self.
 
 class GridSq:
     def __init__(self, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL):
@@ -28,3 +29,4 @@ class GridSq:
         return self.left
     def get_right(self):
         return self.right
+
