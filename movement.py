@@ -155,8 +155,9 @@ def pt_2_pt (BP, speed, angle, distance):
     except KeyboardInterrupt:
         stop(BP)  
 
-#funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components      
+     
 def pt_2_pt2 (BP, x1, x2, y1, y2):
+'''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
     try:
         veci = x2 - x1
         vecj = y2 - y1
@@ -183,11 +184,8 @@ def pt_2_pt2 (BP, x1, x2, y1, y2):
     except KeyboardInterrupt:
         stop(BP)
 
-
-        
-            
-            
-            
+   
+       
         
 
 '''

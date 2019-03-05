@@ -3,10 +3,11 @@ import brickpi3
 import grovepi  
 import numpy as np
 
+from enum import Enum, auto
+
 import movement
 import sensors
-
-from enum import Enum, auto
+import mapping
 
 class Sensor(Enum):
     LEFT = auto()
@@ -16,6 +17,7 @@ class Sensor(Enum):
 #functional tests
 def calibrate(BP):
     sensors.gyroCalib(BP)
+    sensors.frontUltraCalib(BP)
 
     calib = sensors.imuCalib()
     imu_calib = {
@@ -42,7 +44,7 @@ def maze_nav(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Se
             #                     need to define       v      and                v
             # center robot when trvl corridors
             while errors[0] <= 0 and errors[1] >= -bfr_dist and errors[2] >= -bfr_dist:
-                errors = np.subtract(set_dists, sensors.getUltras(0,0,0))
+                errors = np.subtract(set_dists, sensors.getUltras(BP))
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))              
                 #deriv = np.divide(np.subtract(error, error_p), dt)
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
@@ -60,9 +62,9 @@ def maze_nav(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Se
 
             movement.setSpeed(BP,0,0)
             #check for junction cases
-            cur_front = sensors.getUltras()[0]
-            cur_left = sensors.getUltras()[1]
-            cur_right = sensors.getUltras()[2]
+            cur_front = sensors.getUltras(BP)[0]
+            cur_left = sensors.getUltras(BP)[1]
+            cur_right = sensors.getUltras(BP)[2]
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                 movement.turnPi(BP,180)

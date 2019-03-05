@@ -14,11 +14,9 @@ class State(Enum):
 class Map:
     def __init__(self,x_len = 50,y_len = 50):
         self.grid = np.zeros((x_len,y_len))
-    
     @property
     def grid(self):
         return self.__grid
-
     @grid.setter
     def grid(self, grid):
         # if x < 0:
@@ -26,13 +24,18 @@ class Map:
         # elif x > 1000:
         #     self.__x = 1000
         self.__grid = grid
+    def findNearestUnexp(self,):
+        pass
+    def pushMap(self,):
+        pass
 
 
     
 
 class GridSq:
-    def __init__(self, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL, \
+    def __init__(self,length = 5, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL, \
         next_up = None, next_down = None, next_left = None, next_right = None):
+        self.length = length
         self.up = up
         self.down = down
         self.left = left
@@ -41,6 +44,12 @@ class GridSq:
         self.next_down = next_down
         self.next_left = next_left
         self.next_right = next_right
+    @property
+    def length(self):
+        return self.__length
+    @length.setter
+    def length(self,length):
+        self.__length = length
     @property
     def up(self):
         return self.__up
