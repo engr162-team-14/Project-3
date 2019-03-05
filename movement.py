@@ -164,7 +164,7 @@ def pt_2_pt2 (BP, x1, x2, y1, y2):
             turnPiAbs(BP, 90)
             speedControl(BP, 6, abs(veci))
             if(vecj < 0):
-                turnPiAbs(BP, )
+                turnPiAbs(BP, 180)
                 speedControl(BP, 6, abs(vecj))
             else:
                 turnPiAbs(BP, 0)

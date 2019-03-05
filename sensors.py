@@ -135,7 +135,19 @@ def getGyroFilterVals(imu_calib):
     out = imuFiltered(imu_calib)
     return [out[3],out[4],out[5]]
 
-#geting Magnetometer data
+def IMUMagnet():
+    try:
+        mpu9250 = MPU9250()
+        while True:
+            mag = mpu9250.readMagnet()
+            mag_x = mag['x']
+            mag_y = mag['y']
+            mag_z = mag['z']
+            return 
+
+            time.sleep(.25)
+    except Exception as error: 
+        print("IMUTest:",error)
 
 def IMUTest():
     try:
