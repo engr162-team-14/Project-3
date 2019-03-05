@@ -23,15 +23,20 @@ def gyroCalib(BP):
                 return BP.get_sensor(BP.PORT_1)
             except Exception:
                 pass              
-            time.sleep(0.02)  
-    except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
-        BP.reset_all() 
+            time.sleep(0.02) 
+    except Exception as error: 
+        print("gyroCalib:",error)
+    except KeyboardInterrupt:
+        BP.reset_all()
 
 def gyroVal(BP):
-    snsr = (BP.get_sensor(BP.PORT_1))
-    snsr = snsr[0]
-    print("Gyro (sensor): "+str(snsr))
-    return snsr
+    try:
+        snsr = (BP.get_sensor(BP.PORT_1))
+        snsr = snsr[0]
+        print("Gyro (sensor): "+str(snsr))
+        return snsr
+    except Exception as error: 
+        print("gyroVal:",error)
 
 def gyroTest(BP):
     try:
@@ -40,6 +45,8 @@ def gyroTest(BP):
             print(rot)
     except Exception as error: 
         print("gyroTest:",error)
+    except KeyboardInterrupt:
+        BP.reset_all()
 
 def frontUltraCalib(BP):
     try:
@@ -53,14 +60,18 @@ def frontUltraCalib(BP):
             except Exception:
                 pass   
             time.sleep(0.02)  
-
-    except KeyboardInterrupt: # except the program gets interrupted by Ctrl+C on the keyboard.
-        BP.reset_all() 
+    except Exception as error: 
+        print("frontUltraCalib:",error)
+    except KeyboardInterrupt:
+        BP.reset_all()
 
 def frontUltraVal(BP):
-    snsr = (BP.get_sensor(BP.PORT_3))
-    print("Front Ultra (sensor): "+str(snsr))
-    return snsr
+    try:
+        snsr = (BP.get_sensor(BP.PORT_3))
+        print("Front Ultra (sensor): "+str(snsr))
+        return snsr
+    except Exception as error: 
+        print("frontUltraVal:",error)
 
 def frontUltraTest(BP):
     try:
@@ -70,9 +81,16 @@ def frontUltraTest(BP):
 
     except Exception as error: 
         print("frontUltraTest:",error)
+    except KeyboardInterrupt:
+        BP.reset_all()
 
 def getUltras(BP,port_l=2,port_r=1):
-    return [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+    try:
+        return [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+    except Exception as error: 
+        print("getUltras:",error)
+
+#filtering Ultras
 
 def imuCalib(width=1, depth=100, dly=0.01):
     try:
@@ -160,24 +178,14 @@ def imuFiltered(imu_calib,adv = True, pick = 1, count = 3):
     except Exception as error: 
         print("imuFiltered",error)
 
-def getGyroFilterVals(imu_calib):
-    out = imuFiltered(imu_calib)
-    return [out[3],out[4],out[5]]
-
-def IMUMagnet():
+def imuGyroFiltered(imu_calib):
     try:
-        mpu9250 = MPU9250()
-        while True:
-            mag = mpu9250.readMagnet()
-            mag_x = mag['x']
-            mag_y = mag['y']
-            mag_z = mag['z']
-            time.sleep(.25)
-        return mag
+        out = imuFiltered(imu_calib)
+        return [out[3],out[4],out[5]]
     except Exception as error: 
-        print("IMUMagmet",error)
+        print("imuGyroFiltered:",error)
 
-def IMUTest():
+def imuGyroTest():
     try:
         mpu9250 = MPU9250()
         while True:
@@ -185,43 +193,54 @@ def IMUTest():
             print(gyro['x'])
 
     except Exception as error: 
-        print("IMUTest:",error)
+        print("imuGyroTest:",error)
 
-def IR_setup(grovepi):
-        sensor1= 14		# Pin 14 is A0 Port.
-        sensor2 = 15		# Pin 15 is A0 Port.
-        grovepi.pinMode(sensor1,"INPUT")
-        grovepi.pinMode(sensor2,"INPUT")
+def imuMagFiltered(imu_calib):
+    try:
+        out = imuFiltered(imu_calib)
+        return [out[6],out[7],out[8]]
+    except Exception as error: 
+        print("imuMagFiltered:",error)
 
-# Output function
-def IR_PrintValues(grovepi):
-        try:
-                sensor1= 14		# Pin 14 is A0 Port.
-                sensor2 = 15		# Pin 15 is A0 Port.               
-                sensor1_value = grovepi.analogRead(sensor1)
-                sensor2_value = grovepi.analogRead(sensor2)
-                
-                print ("One = " + str(sensor1_value) + "\tTwo = " + str(sensor2_value))
-                time.sleep(.1) # Commenting out for now
+def imuMagTest():
+    try:
+        mpu9250 = MPU9250()
+        while True:
+            mag = mpu9250.readMagnet()
+            mag_x = mag['x']
+            mag_y = mag['y']
+            mag_z = mag['z']
+            print("x: %f  y: %f  z: %f" % (mag_x,mag_y,mag_z))
+            time.sleep(.25)
+        return mag
+    except Exception as error: 
+        print("imuMagFiltered: ",error)
 
-        except IOError:
-                print ("Error")
+def irCalib(pin1 = 14, pin2 = 15):
+    try:
+        # Pin 14 and Pin 15 are A0 Port.
+        grovepi.pinMode(pin1,"INPUT")
+        grovepi.pinMode(pin2,"INPUT")
+    except Exception as error: 
+        print("irCalib:",error)
 
-#Read Function		
-def IR_Read(grovepi):
-        try:
-                sensor1= 14		# Pin 14 is A0 Port.
-                sensor2 = 15		# Pin 15 is A0 Port.                
-                sensor1_value = grovepi.analogRead(sensor1)
-                sensor2_value = grovepi.analogRead(sensor2)
-                
-                return [sensor1_value, sensor2_value]
+def irTest(pin1 = 14, pin2 = 15):
+    try:  
+        while True:           
+            sensor1_value = grovepi.analogRead(pin1)
+            sensor2_value = grovepi.analogRead(pin2)
+            
+            print ("One = " + str(sensor1_value) + "\tTwo = " + str(sensor2_value))
+            time.sleep(.1)
 
-        except IOError:
-                print ("Error")
+    except Exception as error: 
+        print("irTest:",error)
+		
+def irVal(pin1 = 14, pin2 = 15):
+    try:            
+            sensor1_value = grovepi.analogRead(pin1)
+            sensor2_value = grovepi.analogRead(pin2)
 
-#filtering Ultras
-
-#ultra testing
-
-    
+            return [sensor1_value, sensor2_value]
+    except Exception as error: 
+        print("irVal:",error)

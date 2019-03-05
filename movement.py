@@ -8,8 +8,8 @@ from sensors import gyroVal
 from sensors import gyroTest
 from sensors import imuCalib
 from sensors import imuFiltered
-from sensors import getGyroFilterVals
-from sensors import IMUTest
+from sensors import imuGyroFiltered
+from sensors import imuGyroTest
 from sensors import getUltras
 
 
@@ -154,10 +154,9 @@ def pt_2_pt (BP, speed, angle, distance):
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
-
      
 def pt_2_pt2 (BP, x1, x2, y1, y2):
-'''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
+    '''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
     try:
         veci = x2 - x1
         vecj = y2 - y1
@@ -183,7 +182,6 @@ def pt_2_pt2 (BP, x1, x2, y1, y2):
         print("pt_2_pt2",error)
     except KeyboardInterrupt:
         stop(BP)
-
    
        
         
