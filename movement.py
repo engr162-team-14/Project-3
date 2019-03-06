@@ -2,16 +2,28 @@ import brickpi3
 import grovepi 
 import math
 import time
+from enum import Enum, auto
 
 from sensors import gyroCalib
 from sensors import gyroVal
 from sensors import gyroTest
+from sensors import frontUltraCalib
+from sensors import frontUltraVal
+from sensors import frontUltraTest
+from sensors import getUltras
 from sensors import imuCalib
 from sensors import imuFiltered
 from sensors import imuGyroFiltered
 from sensors import imuGyroTest
-from sensors import getUltras
+from sensors import imuMagFiltered
+from sensors import imuMagTest
+from sensors import irCalib
+from sensors import irTest
+from sensors import irVal
 
+class Hazard(Enum):
+    NO_HAZARDS = auto()
+    CHECK_HAZARDS = auto()
 
 def stop(BP):
     BP.set_motor_dps(BP.PORT_B, 0)
@@ -46,13 +58,13 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     except KeyboardInterrupt:
         stop(BP)
 
-def speedControl(BP,speed,distance):
+def speedControl(BP,imu_calib,speed,distance,haz_mode = Hazard.NO_HAZARDS,pos = 0,ir_thresh = 30,mag_thresh = 30):
     try:
-        pos = 0  
-
         while distance >= pos:
             start_time = time.time()
-
+            
+            if haz_mode == Hazard.CHECK_HAZARDS and imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh:
+                return pos
             setSpeed(BP,speed,speed)
             # print("Motor A: %6d  B: %6d  C: %6d  D: %6d pos: %f" %
             #     (BP.get_motor_encoder(BP.PORT_A), BP.get_motor_encoder(BP.PORT_B),
@@ -145,44 +157,57 @@ def getDistance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, speed, angle, distance):
+def pt_2_pt (BP, imu_calib, speed, angle, distance):
     try:
         turnPiAbs(BP, angle, .3, .7)
         
-        speedControl(BP,speed,distance)
+        speedControl(BP, imu_calib, speed,distance)
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
      
-def pt_2_pt2 (BP, x1, x2, y1, y2):
+def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
     '''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
     try:
         veci = x2 - x1
         vecj = y2 - y1
         if(veci < 0):
             turnPiAbs(BP, 90)
-            speedControl(BP, 6, abs(veci))
+            speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
                 turnPiAbs(BP, 180)
-                speedControl(BP, 6, abs(vecj))
+                speedControl(BP, imu_calib, 6, abs(vecj))
             else:
                 turnPiAbs(BP, 0)
-                speedControl(BP, 6, abs(vecj))
+                speedControl(BP, imu_calib, 6, abs(vecj))
         else:
             turnPiAbs(BP, 270)
-            speedControl(BP, 6, abs(veci))
+            speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
                 turnPiAbs(BP, 180)
-                speedControl(BP, 6, abs(vecj))
+                speedControl(BP, imu_calib, 6, abs(vecj))
             else:
                 turnPiAbs(BP, 0)
-                speedControl(BP, 6, abs(vecj))
+                speedControl(BP, imu_calib, 6, abs(vecj))
     except Exception as error: 
         print("pt_2_pt2",error)
     except KeyboardInterrupt:
         stop(BP)
-   
+
+def hazardLocate(BP):
+    try:
+        while True:
+            sensors = irVal()
+            if sensors[0] >= 15:
+                pass
+    except Exception as error: 
+        print("hazardLocate",error)
+    except KeyboardInterrupt:
+        stop(BP)
+            
+                
+            
        
         
 

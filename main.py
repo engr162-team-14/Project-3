@@ -18,6 +18,7 @@ class Sensor(Enum):
 def calibrate(BP):
     sensors.gyroCalib(BP)
     sensors.frontUltraCalib(BP)
+    sensors.irCalib()
 
     calib = sensors.imuCalib()
     imu_calib = {
@@ -32,7 +33,7 @@ def calibrate(BP):
     }
     return imu_calib
 
-def maze_nav(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
+def mazeNav(BP,imu_calib,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
@@ -89,11 +90,24 @@ def maze_nav(BP,speed,set_dists,kp,ki,kd,bfr_dist = 5,exit_dist = 30,sensor = Se
             else:
                 print("I don't know what to do. WTF ZACH!!!")
 
-            movement.speedControl(BP,speed,exit_dist)
+            movement.speedControl(BP,imu_calib,speed,exit_dist)
             time.sleep(.1)
          
     except Exception as error: 
-        print("maze_nav_pi:",error)
+        print("mazeNav:",error)
+    except KeyboardInterrupt:
+        movement.stop(BP)
+
+
+def navPointsInSeq(BP,points,speed):
+    try:
+        for x in range(len(points) - 1):
+            ang = movement.getAngle(points[x][0],points[x][1],points[x+1][0],points[x+1][1])
+            dist = movement.getDistance(points[x][0],points[x][1],points[x+1][0],points[x+1][1])
+            movement.pt_2_pt(BP, imu_calib, speed,ang,dist)
+
+    except Exception as error: 
+        print("navPointsInSeq:",error)
     except KeyboardInterrupt:
         movement.stop(BP)
 

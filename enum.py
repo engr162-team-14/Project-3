@@ -55,8 +55,10 @@ class auto:
 
 class _EnumDict(dict):
     """Track enum member order and ensure member names are not reused.
+
     EnumMeta will use the names found in self._member_names as the
     enumeration member names.
+
     """
     def __init__(self):
         super().__init__()
@@ -66,9 +68,12 @@ class _EnumDict(dict):
 
     def __setitem__(self, key, value):
         """Changes anything not dundered or not a descriptor.
+
         If an enum member name is used twice, an error is raised; duplicate
         values are not checked for.
+
         Single underscore (sunder) names are reserved.
+
         """
         if _is_sunder(key):
             if key not in (
@@ -277,20 +282,28 @@ class EnumMeta(type):
 
     def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1):
         """Either returns an existing member, or creates a new enum class.
+
         This method is used both when an enum class is given a value to match
         to an enumeration member (i.e. Color(3)) and for the functional API
         (i.e. Color = Enum('Color', names='RED GREEN BLUE')).
+
         When used for the functional API:
+
         `value` will be the name of the new class.
+
         `names` should be either a string of white-space/comma delimited names
         (values will start at `start`), or an iterator/mapping of name, value pairs.
+
         `module` should be set to the module this class is being created in;
         if it is not set, an attempt to find that module will be made, but if
         it fails the class will not be picklable.
+
         `qualname` should be set to the actual location this class can be found
         at in its module; by default it is set to the global scope.  If this is
         not correct, unpickling will fail in some circumstances.
+
         `type`, if set, will be mixed in as the first base class.
+
         """
         if names is None:  # simple value lookup
             return cls.__new__(cls, value)
@@ -320,10 +333,12 @@ class EnumMeta(type):
 
     def __getattr__(cls, name):
         """Return the enum member matching `name`
+
         We use __getattr__ instead of descriptors or inserting into the enum
         class' __dict__ in order to support `name` and `value` being both
         properties for enum members (which live in the class' __dict__) and
         enum members themselves.
+
         """
         if _is_dunder(name):
             raise AttributeError(name)
@@ -344,8 +359,10 @@ class EnumMeta(type):
     @property
     def __members__(cls):
         """Returns a mapping of member name->value.
+
         This mapping lists all enum members, including aliases. Note that this
         is a read-only view of the internal mapping.
+
         """
         return MappingProxyType(cls._member_map_)
 
@@ -357,9 +374,11 @@ class EnumMeta(type):
 
     def __setattr__(cls, name, value):
         """Block attempts to reassign Enum members.
+
         A simple assignment to the class namespace only changes one of the
         several possible ways to get an Enum member from the Enum class,
         resulting in an inconsistent Enumeration.
+
         """
         member_map = cls.__dict__.get('_member_map_', {})
         if name in member_map:
@@ -368,12 +387,15 @@ class EnumMeta(type):
 
     def _create_(cls, class_name, names, *, module=None, qualname=None, type=None, start=1):
         """Convenience method to create a new Enum class.
+
         `names` can be:
+
         * A string containing member names, separated either with spaces or
           commas.  Values are incremented by 1 from `start`.
         * An iterable of member names.  Values are incremented by 1 from `start`.
         * An iterable of (member name, value) pairs.
         * A mapping of member name -> value pairs.
+
         """
         metacls = cls.__class__
         bases = (cls, ) if type is None else (type, cls)
@@ -420,7 +442,9 @@ class EnumMeta(type):
     def _get_mixins_(bases):
         """Returns the type for creating enum members, and the first inherited
         enum class.
+
         bases: the tuple of bases that was given to __new__
+
         """
         if not bases:
             return object, Enum
@@ -449,9 +473,11 @@ class EnumMeta(type):
     @staticmethod
     def _find_new_(classdict, member_type, first_enum):
         """Returns the __new__ to be used for creating the enum members.
+
         classdict: the class dictionary given to __new__
         member_type: the data type whose __new__ will be used by default
         first_enum: enumeration to check for an overriding __new__
+
         """
         # now find the correct __new__, checking to see of one was defined
         # by the user; also check earlier enum classes in case a __new__ was
@@ -492,7 +518,9 @@ class EnumMeta(type):
 
 class Enum(metaclass=EnumMeta):
     """Generic enumeration.
+
     Derive from this class to define new enumerations.
+
     """
     def __new__(cls, value):
         # all enum instances are actually created during class construction
@@ -651,6 +679,7 @@ class Flag(Enum):
     def _generate_next_value_(name, start, count, last_values):
         """
         Generate the next value when not given.
+
         name: the name of the member
         start: the initital start value or None
         count: the number of existing members
