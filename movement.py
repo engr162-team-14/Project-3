@@ -37,7 +37,7 @@ def stop(BP):
                
     print("stopped")
 
-def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .065):
+def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
@@ -49,8 +49,8 @@ def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .065):
             dps_r = -(speed_r * (360/(7* math.pi)))         
 
         if speed_l != speed_r or speed_l == speed_r == 0:
-            BP.set_motor_dps(BP.PORT_B, dps_l)   
-            BP.set_motor_dps(BP.PORT_C, dps_r)
+            BP.set_motor_dps(BP.PORT_C, dps_l)   
+            BP.set_motor_dps(BP.PORT_B, dps_r)
         else:
             eq_deg = gyroVal(BP)
             error = -1
@@ -64,8 +64,8 @@ def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .065):
                 output = kp * (error) + ki * (integ)        #PI feedback response
                 error_p = error
                 
-                BP.set_motor_dps(BP.PORT_B, dps_l - output)   
-                BP.set_motor_dps(BP.PORT_C, dps_r + output)  
+                BP.set_motor_dps(BP.PORT_C, dps_l - output)   
+                BP.set_motor_dps(BP.PORT_B, dps_r + output)  
                 time.sleep(dt)
 
     except Exception as error: 
@@ -73,7 +73,7 @@ def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .065):
     except KeyboardInterrupt:
         stop(BP)
 
-def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .065,pos = 0,haz_mode = Hazard.NO_HAZARDS):
+def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode = Hazard.NO_HAZARDS):
     try:
         dps = (speed * (360/(7* math.pi)))
         eq_deg = gyroVal(BP)
@@ -149,7 +149,7 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         integ = 0
         dt = .1
         
-        while  error != 0:
+        while  -0.1 <error < 0.1:
             error = deg - gyroVal(BP)                   #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -188,7 +188,7 @@ def getAngle (x1, y1, x2, y2):
                 angle = angle + 180
             else:
                 angle = angle
-        return angle
+        return math.degrees(angle)
     except Exception as error: 
         print("angle",error)
 
@@ -248,29 +248,73 @@ def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, ha
     except KeyboardInterrupt:
         stop(BP)
 '''
-     
+Isaac = gyroVal(BP)
+
+def go_to_90 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = 90 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_90",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_180 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = 180 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_180",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_90_2 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = -90 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_90_2",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_0 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_0",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
 def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
     '''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
     try:
         veci = x2 - x1
         vecj = y2 - y1
         if(veci < 0):
-            turnPi(BP, 90)
+            deg = go_to_90(BP)
+            turnPi(BP, deg)
             speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
-                turnPi(BP, 180)
+                deg = go_to_180(BP)
+                turnPi(BP, deg)
                 speedControl(BP, imu_calib, 6, abs(vecj))
             else:
+                deg = go_to_0(BP)
                 turnPi(BP, 0)
                 speedControl(BP, imu_calib, 6, abs(vecj))
         else:
-            turnPi(BP, 270)
+            deg = go_to_90_2(BP)
+            turnPi(BP, deg)
             speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
-                turnPi(BP, 180)
+                go_to_180
+                turnPi(BP, deg)
                 speedControl(BP, imu_calib, 6, abs(vecj))
             else:
-                turnPi(BP, 0)
+                deg = go_to_0(BP)
+                turnPi(BP, deg)
                 speedControl(BP, imu_calib, 6, abs(vecj))
     except Exception as error: 
         print("pt_2_pt2",error)

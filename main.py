@@ -14,10 +14,6 @@ class Sensor(Enum):
     RIGHT = 1
     FRONT = 2 
 
-class Hazard(Enum):
-    NO_HAZARDS = 0
-    CHECK_HAZARDS = 1
-
 class Calibration:
     def __init__(self,BP,imu_calib,motor_l,motor_r,gyro,ultra_f,ultra_l,ultra_r):
         self.BP = BP
@@ -125,7 +121,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 5,exit_dis
 def navPointsInSeq(BP,imu_calib,speed,points):
     try:
         for x in range(len(points) - 1):
-            movement.pt_2_pt(BP, imu_calib, speed, points[x], points[x+1])
+            movement.pt_2_pt(BP, imu_calib, speed, points[x], points[x+1],1)
 
     except Exception as error: 
         print("navPointsInSeq:",error)
@@ -140,7 +136,7 @@ if __name__ == '__main__':
 
     # movement.turnPi(BP,0)
 
-    # movement.pt_2_pt(BP,imu_calib,5,(0,0),(3,4),Hazard.CHECK_HAZARDS)
+    movement.pt_2_pt(BP,imu_calib,5,(0,0),(3,4),1,movement.Hazard.CHECK_HAZARDS,[10,5,7])
 
     # pts = [(),(),(),()]
     # navPointsInSeq(BP,imu_calib,5,pts)
