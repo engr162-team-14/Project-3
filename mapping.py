@@ -4,12 +4,12 @@ import math
 import time
 
 import numpy as np
-from enum import Enum, auto
+from enum import Enum
 
 class State(Enum):
-    WALL = auto()
-    EXPL = auto()
-    UNEXPL = auto()
+    WALL = 0
+    EXPL = 1
+    UNEXPL = 2
 
 class Map:
     def __init__(self,x_len = 50,y_len = 50):
@@ -29,8 +29,6 @@ class Map:
     def pushMap(self,):
         pass
 
-
-    
 
 class GridSq:
     def __init__(self,length = 5, up = State.UNEXPL, down = State.EXPL, left = State.WALL, right = State.WALL, \

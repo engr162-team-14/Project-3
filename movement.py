@@ -2,7 +2,7 @@ import brickpi3
 import grovepi 
 import math
 import time
-from enum import Enum, auto
+from enum import Enum
 
 from sensors import gyroCalib
 from sensors import gyroVal
@@ -22,8 +22,8 @@ from sensors import irTest
 from sensors import irVal
 
 class Hazard(Enum):
-    NO_HAZARDS = auto()
-    CHECK_HAZARDS = auto()
+    NO_HAZARDS = 0
+    CHECK_HAZARDS = 1
 
 def stop(BP):
     BP.set_motor_dps(BP.PORT_B, 0)
@@ -58,7 +58,7 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     except KeyboardInterrupt:
         stop(BP)
 
-def speedControl(BP,imu_calib,speed,distance,haz_mode = Hazard.NO_HAZARDS,pos = 0,ir_thresh = 30,mag_thresh = 30):
+def speedControl(BP,imu_calib,speed,distance,pos = 0,haz_mode = Hazard.NO_HAZARDS,ir_thresh = 30,mag_thresh = 30):
     try:
         while distance >= pos:
             start_time = time.time()
@@ -92,7 +92,7 @@ def turnSimple(BP,deg):
     except KeyboardInterrupt:
         stop(BP)
 
-def turnPi(BP,deg,kp = .7,ki = .3):
+def turnPi(BP,deg,kp = .2,ki = .025):
     try:
         target_deg = gyroVal(BP) + deg
         error = -1
@@ -106,6 +106,7 @@ def turnPi(BP,deg,kp = .7,ki = .3):
             output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
             
+            print(output)
             setSpeed(BP,output,-output)  
             time.sleep(dt)
                 
@@ -115,7 +116,7 @@ def turnPi(BP,deg,kp = .7,ki = .3):
     except KeyboardInterrupt:
         stop(BP)
 
-def turnPiAbs(BP,deg,kp = .7,ki = .3):
+def turnPiAbs(BP,deg,kp = .2,ki = .025):
     try:
         error = -1
         error_p = 0
@@ -157,11 +158,15 @@ def getDistance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, imu_calib, speed, angle, distance):
+def pt_2_pt (BP, imu_calib, speed, cur_angle, target_ang, distance, haz_mode = Hazard.NO_HAZARDS):
     try:
-        turnPiAbs(BP, angle, .3, .7)
-        
-        speedControl(BP, imu_calib, speed,distance)
+        angle_delt = target_ang - cur_angle
+        turnPiAbs(BP, angle_delt)
+        if haz_mode == Hazard.NO_HAZARDS:
+            speedControl(BP, imu_calib, speed, distance, haz_mode)
+        else:
+            pos = speedControl(BP, imu_calib,speed,distance,haz_mode = haz_mode)
+            # calculate new route and get there...
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:
@@ -195,7 +200,7 @@ def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
     except KeyboardInterrupt:
         stop(BP)
 
-def hazardLocate(BP):
+def pt_2_pt_hazard(BP):
     try:
         while True:
             sensors = irVal()

@@ -3,16 +3,16 @@ import brickpi3
 import grovepi  
 import numpy as np
 
-from enum import Enum, auto
+from enum import Enum
 
 import movement
 import sensors
 import mapping
 
 class Sensor(Enum):
-    LEFT = auto()
-    RIGHT = auto()
-    FRONT = auto()  
+    LEFT = 0
+    RIGHT = 1
+    FRONT = 2 
 
 #functional tests
 def calibrate(BP):
