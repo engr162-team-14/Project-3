@@ -14,6 +14,7 @@ from MPU9250 import MPU9250
 
 def gyroCalib(BP):
     try:
+        BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.NONE)
         BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)  #set BP port 1 to Gyro
         print("calibrating gyroscope..")
         while True:
@@ -244,3 +245,8 @@ def irVal(pin1 = 14, pin2 = 15):
             return [sensor1_value, sensor2_value]
     except Exception as error: 
         print("irVal:",error)
+
+def hazardCheck(imu_calib, ir_thresh = 30,mag_thresh = 30):
+    imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh
+    #ahhhh
+    return False

@@ -20,6 +20,7 @@ from sensors import imuMagTest
 from sensors import irCalib
 from sensors import irTest
 from sensors import irVal
+from sensors import hazardCheck
 
 class Hazard(Enum):
     NO_HAZARDS = 0
@@ -36,40 +37,66 @@ def stop(BP):
                
     print("stopped")
 
-def setSpeed(BP,speed_l,speed_r,drc = 0):
+def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .065):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
             dps_l = (speed_l * (360/(7* math.pi)))
             dps_r = (speed_r * (360/(7* math.pi)))         
             
-            BP.set_motor_dps(BP.PORT_B, dps_l)   
-            BP.set_motor_dps(BP.PORT_C, dps_r)
-
         else:
             dps_l = -(speed_l * (360/(7* math.pi))) 
             dps_r = -(speed_r * (360/(7* math.pi)))         
 
-            BP.set_motor_dps(BP.PORT_C, dps_l)   
-            BP.set_motor_dps(BP.PORT_B, dps_r)
+        if speed_l != speed_r or speed_l == speed_r == 0:
+            BP.set_motor_dps(BP.PORT_B, dps_l)   
+            BP.set_motor_dps(BP.PORT_C, dps_r)
+        else:
+            eq_deg = gyroVal(BP)
+            error = -1
+            error_p = 0
+            integ = 0
+            dt = .1
+            
+            while True:
+                error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
+                integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
+                output = kp * (error) + ki * (integ)        #PI feedback response
+                error_p = error
+                
+                BP.set_motor_dps(BP.PORT_B, dps_l - output)   
+                BP.set_motor_dps(BP.PORT_C, dps_r + output)  
+                time.sleep(dt)
 
     except Exception as error: 
         print("setSpeed:",error)
     except KeyboardInterrupt:
         stop(BP)
 
-def speedControl(BP,imu_calib,speed,distance,pos = 0,haz_mode = Hazard.NO_HAZARDS,ir_thresh = 30,mag_thresh = 30):
+def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .065,pos = 0,haz_mode = Hazard.NO_HAZARDS):
     try:
-        while distance >= pos:
+        dps = (speed * (360/(7* math.pi)))
+        eq_deg = gyroVal(BP)
+        error = -1
+        error_p = 0
+        integ = 0
+        dt = .08
+
+        while distance > pos:
             start_time = time.time()
             
-            if haz_mode == Hazard.CHECK_HAZARDS and imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh:
+            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
                 return pos
-            setSpeed(BP,speed,speed)
-            # print("Motor A: %6d  B: %6d  C: %6d  D: %6d pos: %f" %
-            #     (BP.get_motor_encoder(BP.PORT_A), BP.get_motor_encoder(BP.PORT_B),
-            #     BP.get_motor_encoder(BP.PORT_C),BP.get_motor_encoder(BP.PORT_D),pos))	
-            time.sleep(.05)
+
+            error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
+            integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
+            output = kp * (error) + ki * (integ)        #PI feedback response
+            error_p = error
+                
+            BP.set_motor_dps(BP.PORT_B, dps - output)   
+            BP.set_motor_dps(BP.PORT_C, dps + output)  
+            time.sleep(dt)
+
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
@@ -106,7 +133,6 @@ def turnPi(BP,deg,kp = .2,ki = .025):
             output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
             
-            print(output)
             setSpeed(BP,output,-output)  
             time.sleep(dt)
                 
@@ -124,7 +150,7 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         dt = .1
         
         while  error != 0:
-            error = deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
+            error = deg - gyroVal(BP)                   #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
@@ -142,8 +168,26 @@ def getAngle (x1, y1, x2, y2):
     try:
         veci = x2 - x1
         vecj = y2 - y1
-        angle = math.atan(vecj/veci)
-        
+        angle = math.atan(veci/vecj)
+        if(veci < 0):
+            if(vecj == 0):
+                angle = -90
+            elif(vecj < 0):
+                angle = angle - 180
+            else:
+                angle = angle
+        elif(veci == 0):
+            if(vecj > 0):
+                angle = 0
+            else:
+                angle = 180
+        else:
+            if(vecj == 0):
+                angle = 90
+            elif(vecj < 0):
+                angle = angle + 180
+            else:
+                angle = angle
         return angle
     except Exception as error: 
         print("angle",error)
@@ -158,20 +202,52 @@ def getDistance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, haz_mode = Hazard.NO_HAZARDS):
+def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazard.NO_HAZARDS, guestimates = [50,30,17]):
     try:
-        distance = getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        distance = length_conv * getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         angle = getAngle(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         turnPi(BP, angle)
         if haz_mode == Hazard.NO_HAZARDS:
-            speedControl(BP, imu_calib, speed, distance, haz_mode)
+            speedControl(BP, imu_calib, speed, distance, haz_mode = haz_mode)
         else:
-            pos = speedControl(BP, imu_calib,speed,distance,haz_mode = haz_mode)
-            # calculate new route and get there...
+            pos = speedControl(BP, imu_calib,speed,guestimates[0], haz_mode = haz_mode)
+            
+            turnPi(BP,-90)
+            speedControl(BP, imu_calib,speed,guestimates[1], haz_mode = haz_mode)
+        
+            turnPi(BP,90)
+            speedControl(BP, imu_calib,speed,guestimates[2], haz_mode = haz_mode)
+            pos += guestimates[2]
+            
+            turnPi(BP,90)
+            speedControl(BP, imu_calib,speed,guestimates[1], haz_mode = haz_mode)
+
+            turnPi(BP,-90)
+            speedControl(BP, imu_calib,speed,distance,pos = pos, haz_mode = haz_mode)
+            
+        turnPi(BP, -angle)
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
+
+'''
+def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
+    try:
+        distance = length_conv * getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        angle = init_ang - getAngle(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        turnPi(BP, angle)
+        if haz_mode == Hazard.NO_HAZARDS:
+            speedControl(BP, imu_calib, speed, distance, haz_mode = haz_mode)
+        else:
+            pos = speedControl(BP, imu_calib,speed,distance, haz_mode = haz_mode)
+            # calculate new route and get there...
+        turnPi(BP, -angle)
+    except Exception as error: 
+        print("pt_2_pt_abs",error)
+    except KeyboardInterrupt:
+        stop(BP)
+'''
      
 def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
     '''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
@@ -179,36 +255,25 @@ def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
         veci = x2 - x1
         vecj = y2 - y1
         if(veci < 0):
-            turnPiAbs(BP, 90)
+            turnPi(BP, 90)
             speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
-                turnPiAbs(BP, 180)
+                turnPi(BP, 180)
                 speedControl(BP, imu_calib, 6, abs(vecj))
             else:
-                turnPiAbs(BP, 0)
+                turnPi(BP, 0)
                 speedControl(BP, imu_calib, 6, abs(vecj))
         else:
-            turnPiAbs(BP, 270)
+            turnPi(BP, 270)
             speedControl(BP, imu_calib, 6, abs(veci))
             if(vecj < 0):
-                turnPiAbs(BP, 180)
+                turnPi(BP, 180)
                 speedControl(BP, imu_calib, 6, abs(vecj))
             else:
-                turnPiAbs(BP, 0)
+                turnPi(BP, 0)
                 speedControl(BP, imu_calib, 6, abs(vecj))
     except Exception as error: 
         print("pt_2_pt2",error)
-    except KeyboardInterrupt:
-        stop(BP)
-
-def pt_2_pt_hazard(BP):
-    try:
-        while True:
-            sensors = irVal()
-            if sensors[0] >= 15:
-                pass
-    except Exception as error: 
-        print("hazardLocate",error)
     except KeyboardInterrupt:
         stop(BP)
             
