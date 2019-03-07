@@ -99,7 +99,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 5,exit_dis
                 movement.turnPi(BP, 90)
             #left and forward
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                pass
+                movement.turnPi(BP, 90)
             #right and forward
             elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 movement.turnPi(BP, 90)
@@ -129,18 +129,16 @@ def navPointsInSeq(BP,imu_calib,speed,points):
         movement.stop(BP)
 
 
-
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
 
-    # movement.turnPi(BP,0)
+    # movement.turnPi(BP,90)
 
-    movement.pt_2_pt(BP,imu_calib,5,(0,0),(3,4),1,movement.Hazard.CHECK_HAZARDS,[10,5,7])
+    # movement.pt_2_pt(BP,imu_calib,5,(0,0),(3,4),1,movement.Hazard.CHECK_HAZARDS,[10,5,7])
 
     # pts = [(),(),(),()]
     # navPointsInSeq(BP,imu_calib,5,pts)
 
     # set_dists = [5,11.5,11.5]
     # mazeNav(BP,imu_calib,5,set_dists)
-    

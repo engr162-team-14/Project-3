@@ -84,9 +84,10 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
 
         while distance > pos:
             start_time = time.time()
-            
-            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
-                return pos
+
+            #if looking for hazards and there is 
+            # if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+            #     return pos
 
             error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
@@ -100,22 +101,10 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
+        if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+            return pos
     except Exception as error: 
         print("speedControl:",error)
-    except KeyboardInterrupt:
-        stop(BP)
-
-def turnSimple(BP,deg):
-    try:
-        if deg > 0:
-            while gyroVal(BP) < deg:
-                setSpeed(BP,5,-5)   
-        else:
-            while gyroVal(BP) > deg:
-                setSpeed(BP,5,-5)
-        setSpeed(BP,0,0)
-    except Exception as error: 
-        print("turn_simple:",error)
     except KeyboardInterrupt:
         stop(BP)
 
@@ -223,13 +212,14 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazar
             speedControl(BP, imu_calib,speed,guestimates[1], haz_mode = haz_mode)
 
             turnPi(BP,-90)
-            speedControl(BP, imu_calib,speed,distance,pos = pos, haz_mode = haz_mode)
+            speedControl(BP, imu_calib,speed, distance, pos = pos, haz_mode = haz_mode)
             
         turnPi(BP, -angle)
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
+
 
 '''
 def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
@@ -247,7 +237,7 @@ def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, ha
         print("pt_2_pt_abs",error)
     except KeyboardInterrupt:
         stop(BP)
-'''
+
 Isaac = gyroVal(BP)
 
 def go_to_90 (BP):
@@ -288,7 +278,7 @@ def go_to_0 (BP):
         stop(BP)
 
 def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
-    '''funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components '''
+    #funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components
     try:
         veci = x2 - x1
         vecj = y2 - y1
@@ -321,8 +311,8 @@ def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
     except KeyboardInterrupt:
         stop(BP)
             
-                
-            
+
+'''       
        
         
 

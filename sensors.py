@@ -247,6 +247,6 @@ def irVal(pin1 = 14, pin2 = 15):
         print("irVal:",error)
 
 def hazardCheck(imu_calib, ir_thresh = 30,mag_thresh = 30):
-    imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh
+    #imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh
     #ahhhh
-    return False
+    return True
