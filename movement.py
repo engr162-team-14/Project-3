@@ -138,7 +138,7 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         integ = 0
         dt = .1
         
-        while  -0.1 <error < 0.1:
+        while  -0.5 <error < 0.5:
             error = deg - gyroVal(BP)                   #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -219,7 +219,6 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazar
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
-
 
 '''
 def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
