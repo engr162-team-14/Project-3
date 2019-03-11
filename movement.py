@@ -2,6 +2,7 @@ import brickpi3
 import grovepi 
 import math
 import time
+from sys import maxsize
 from enum import Enum
 
 from sensors import gyroCalib
@@ -40,13 +41,14 @@ def stop(BP):
 def setSpeed(BP,speed_l,speed_r,drc = 0):
     try:
         #print(speed_l," ",speed_r)
+        d = 6.85
         if drc >= 0:
-            dps_l = (speed_l * (360/(7* math.pi)))
-            dps_r = (speed_r * (360/(7* math.pi)))         
+            dps_l = (speed_l * (360/(d* math.pi)))
+            dps_r = (speed_r * (360/(d* math.pi)))         
             
         else:
-            dps_l = -(speed_l * (360/(7* math.pi))) 
-            dps_r = -(speed_r * (360/(7* math.pi)))         
+            dps_l = -(speed_l * (360/(d* math.pi))) 
+            dps_r = -(speed_r * (360/(d* math.pi)))         
 
         BP.set_motor_dps(BP.PORT_C, dps_l)   
         BP.set_motor_dps(BP.PORT_B, dps_r)
@@ -56,7 +58,7 @@ def setSpeed(BP,speed_l,speed_r,drc = 0):
     except KeyboardInterrupt:
         stop(BP)
 
-def _setSpeedStraight(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
+def setSpeedStraight(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
@@ -105,6 +107,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
 
             #if looking for hazards and there is 
             if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+                setSpeed(BP,0,0)
                 return pos
 
             error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
@@ -118,6 +121,9 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
+        #delete later vvvvvvvvvvvv
+        if haz_mode == Hazard.CHECK_HAZARDS:
+                return pos
     except Exception as error: 
         print("speedControl:",error)
     except KeyboardInterrupt:
@@ -126,12 +132,12 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
 def turnPi(BP,deg,kp = .2,ki = .025):
     try:
         target_deg = gyroVal(BP) + deg
-        error = -1
+        error = maxsize
         error_p = 0
         integ = 0
         dt = .1
         
-        while  abs(error/target_deg) > .015:
+        while  abs(error) > 1:
             error = target_deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -153,7 +159,7 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         integ = 0
         dt = .1
         
-        while  abs(error/deg) > .015:
+        while  abs(error) > 1:
             error = deg - gyroVal(BP)                   #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -172,7 +178,8 @@ def getAngle (x1, y1, x2, y2):
     try:
         veci = x2 - x1
         vecj = y2 - y1
-        angle = math.atan(veci/vecj)
+        angle = math.degrees(math.atan(veci/vecj))
+
         if(veci < 0):
             if(vecj == 0):
                 angle = -90
@@ -192,7 +199,7 @@ def getAngle (x1, y1, x2, y2):
                 angle = angle + 180
             else:
                 angle = angle
-        return math.degrees(angle)
+        return angle
     except Exception as error: 
         print("angle",error)
 
@@ -206,30 +213,35 @@ def getDistance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazard.NO_HAZARDS, guestimates = [50,30,17]):
+def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazard.NO_HAZARDS, est_avd_dists = [50,18,30]):
+    '''est_avd_dists = [dist to hazard zone, dist needed to traverse horiz, dist needed to traverse vertically]'''
     try:
-        distance = length_conv * getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        pt_1 = [d * length_conv for d in pt_1]
+        pt_2 = [d * length_conv for d in pt_2]
+
+        distance = getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         angle = getAngle(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         turnPi(BP, angle)
         if haz_mode == Hazard.NO_HAZARDS:
             speedControl(BP, imu_calib, speed, distance, haz_mode = haz_mode)
         else:
-            pos = speedControl(BP, imu_calib,speed,guestimates[0], haz_mode = haz_mode)
+            pos = speedControl(BP, imu_calib,speed,est_avd_dists[0], haz_mode = haz_mode)
             
             turnPi(BP,-90)
-            speedControl(BP, imu_calib,speed,guestimates[1], haz_mode = haz_mode)
+            speedControl(BP, imu_calib,speed,est_avd_dists[1], haz_mode = haz_mode)
         
             turnPi(BP,90)
-            speedControl(BP, imu_calib,speed,guestimates[2], haz_mode = haz_mode)
-            pos += guestimates[2]
+            speedControl(BP, imu_calib,speed,est_avd_dists[2], haz_mode = haz_mode)
+            pos += est_avd_dists[2]
             
             turnPi(BP,90)
-            speedControl(BP, imu_calib,speed,guestimates[1], haz_mode = haz_mode)
+            speedControl(BP, imu_calib,speed,est_avd_dists[1], haz_mode = haz_mode)
 
             turnPi(BP,-90)
             speedControl(BP, imu_calib,speed, distance, pos = pos, haz_mode = haz_mode)
             
         turnPi(BP, -angle)
+        input("Hit enter to travel to next point")
     except Exception as error: 
         print("pt_2_pt",error)
     except KeyboardInterrupt:

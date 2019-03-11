@@ -41,7 +41,8 @@ class Calibration:
 
 #functional tests
 def calibrate(BP):
-    gyro = sensors.gyroCalib(BP)
+    #gyro = sensors.gyroCalib(BP)
+    sensors.gyroCalib(BP)
     sensors.frontUltraCalib(BP)
     sensors.irCalib()
 
@@ -132,10 +133,10 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 8,exit_dis
         movement.stop(BP)
 
 
-def navPointsInSeq(BP,imu_calib,speed,points):
+def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 5):
     try:
         for x in range(len(points) - 1):
-            movement.pt_2_pt(BP, imu_calib, speed, points[x], points[x+1],1)
+            movement.pt_2_pt(BP, imu_calib, speed, points[x], points[x+1],length_conv)
 
     except Exception as error: 
         print("navPointsInSeq:",error)
@@ -147,15 +148,18 @@ if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
 
-    sensors.gyroTest(BP)
-    sensors.ultrasTest(BP)
+    #sensors.gyroTest(BP)
+    #sensors.ultrasTest(BP)
+    # sensors.imuMagTest()
+    # sensors.irTest()
+    # movement.speedControl(BP,imu_calib,8,25)
 
     # movement.turnPi(BP,90)
 
-    # movement.pt_2_pt(BP,imu_calib,5,(0,0),(3,4),1,movement.Hazard.CHECK_HAZARDS,[10,5,7])
+    # pts = [(0,0),(2,2),(-3,-1),(4,-2),(0,0)]
+    # navPointsInSeq(BP,imu_calib,5,pts,5)
 
-    # pts = [(),(),(),()]
-    # navPointsInSeq(BP,imu_calib,5,pts)
+    movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
 
     # set_dists = [5,11.5,11.5]
     # mazeNav(BP,imu_calib,5,set_dists)
