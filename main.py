@@ -15,26 +15,33 @@ class Sensor(Enum):
     FRONT = 2 
 
 class Calibration:
-    def __init__(self,BP,imu_calib,motor_l,motor_r,gyro,ultra_f,ultra_l,ultra_r):
+    def __init__(self,BP,imu_calib,gyro):
         self.BP = BP
-        self.motor_l = motor_l
-        self.motor_r = motor_r
         self.imu = imu_calib
         self.gyro = gyro
-        self.ultra_f = ultra_f
-        self.ultra_l = ultra_l
-        self.ultra_r = ultra_r
     @property
     def BP(self):
         return self.__BP
     @BP.setter
     def BP(self,BP):
         self.__BP = BP
-    #continue
+    @property
+    def imu(self):
+        return self.__imu
+    @imu.setter
+    def imu(self,imu):
+        self.__imu = imu
+    @property
+    def gyro(self):
+        return self.__gyro
+    @gyro.setter
+    def gyro(self,gyro):
+        self.__gyro = gyro
+    
 
 #functional tests
 def calibrate(BP):
-    sensors.gyroCalib(BP)
+    gyro = sensors.gyroCalib(BP)
     sensors.frontUltraCalib(BP)
     sensors.irCalib()
 
@@ -49,9 +56,13 @@ def calibrate(BP):
         "dly": calib[6],
         "std": calib[7]
     }
+    # BP = brickpi3.BrickPi3()
+    # Cal = Calibration(BP,imu_calib,gyro)
+    # return Cal
+
     return imu_calib
 
-def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 5,exit_dist = 30,sensor = Sensor.RIGHT):
+def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 8,exit_dist = 30,sensor = Sensor.RIGHT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
@@ -61,8 +72,9 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 5,exit_dis
 
         while True:
             # center robot when trvl corridors
-            while errors[0] <= 0 and errors[1] >= -bfr_dist and errors[2] >= -bfr_dist:
+            while errors[0] < 0 and errors[1] >= -bfr_dist and errors[2] >= -bfr_dist:
                 errors = np.subtract(set_dists, sensors.getUltras(BP))
+                print("errors: %d %d %d",errors[0],errors[1],errors[2])
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))              
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
@@ -109,8 +121,10 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 5,exit_dis
             else:
                 print("I don't know what to do. WTF ZACH!!!")
 
-            movement.speedControl(BP,imu_calib,speed,exit_dist)
-            time.sleep(.1)
+            #drive forward until walls on each side and path ahead (normal)
+            while cur_front <= set_dists[0] or cur_left >= set_dists[1] + bfr_dist or cur_right >= set_dists[2] + bfr_dist:
+                movement.setSpeed(BP,speed,speed)
+                time.sleep(.1)
          
     except Exception as error: 
         print("mazeNav:",error)
@@ -132,6 +146,9 @@ def navPointsInSeq(BP,imu_calib,speed,points):
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
+
+    sensors.gyroTest(BP)
+    sensors.ultrasTest(BP)
 
     # movement.turnPi(BP,90)
 

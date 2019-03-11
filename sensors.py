@@ -85,6 +85,16 @@ def frontUltraTest(BP):
     except KeyboardInterrupt:
         BP.reset_all()
 
+def ultrasTest(BP,port_l=2,port_r=1):
+    try:
+        while True:
+            ultras = [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+            print(ultras)
+    except Exception as error: 
+        print("ultrasTest:",error)
+    except KeyboardInterrupt:
+        BP.reset_all()
+
 def getUltras(BP,port_l=2,port_r=1):
     try:
         return [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
@@ -249,4 +259,4 @@ def irVal(pin1 = 14, pin2 = 15):
 def hazardCheck(imu_calib, ir_thresh = 30,mag_thresh = 30):
     #imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh
     #ahhhh
-    return True
+    return False

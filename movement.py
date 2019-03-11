@@ -37,7 +37,26 @@ def stop(BP):
                
     print("stopped")
 
-def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
+def setSpeed(BP,speed_l,speed_r,drc = 0):
+    try:
+        #print(speed_l," ",speed_r)
+        if drc >= 0:
+            dps_l = (speed_l * (360/(7* math.pi)))
+            dps_r = (speed_r * (360/(7* math.pi)))         
+            
+        else:
+            dps_l = -(speed_l * (360/(7* math.pi))) 
+            dps_r = -(speed_r * (360/(7* math.pi)))         
+
+        BP.set_motor_dps(BP.PORT_C, dps_l)   
+        BP.set_motor_dps(BP.PORT_B, dps_r)
+
+    except Exception as error: 
+        print("setSpeed:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def _setSpeedStraight(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
     try:
         #print(speed_l," ",speed_r)
         if drc >= 0:
@@ -64,18 +83,17 @@ def setSpeed(BP,speed_l,speed_r,drc = 0,kp = .2,ki = .025):
                 output = kp * (error) + ki * (integ)        #PI feedback response
                 error_p = error
                 
-                BP.set_motor_dps(BP.PORT_C, dps_l - output)   
-                BP.set_motor_dps(BP.PORT_B, dps_r + output)  
+                BP.set_motor_dps(BP.PORT_C, dps_l + output)   
+                BP.set_motor_dps(BP.PORT_B, dps_r - output)  
                 time.sleep(dt)
 
     except Exception as error: 
-        print("setSpeed:",error)
+        print("setSpeedStraight:",error)
     except KeyboardInterrupt:
         stop(BP)
 
 def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode = Hazard.NO_HAZARDS):
     try:
-        dps = (speed * (360/(7* math.pi)))
         eq_deg = gyroVal(BP)
         error = -1
         error_p = 0
@@ -86,23 +104,20 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             start_time = time.time()
 
             #if looking for hazards and there is 
-            # if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
-            #     return pos
+            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+                return pos
 
             error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
             error_p = error
                 
-            BP.set_motor_dps(BP.PORT_B, dps - output)   
-            BP.set_motor_dps(BP.PORT_C, dps + output)  
+            setSpeed(BP,speed + output,speed - output)
             time.sleep(dt)
 
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
-        if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
-            return pos
     except Exception as error: 
         print("speedControl:",error)
     except KeyboardInterrupt:
@@ -116,7 +131,7 @@ def turnPi(BP,deg,kp = .2,ki = .025):
         integ = 0
         dt = .1
         
-        while  error != 0:
+        while  abs(error/target_deg) > .015:
             error = target_deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -138,7 +153,7 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         integ = 0
         dt = .1
         
-        while  -0.5 <error < 0.5:
+        while  abs(error/deg) > .015:
             error = deg - gyroVal(BP)                   #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -219,6 +234,7 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazar
         print("pt_2_pt",error)
     except KeyboardInterrupt:
         stop(BP)  
+
 
 '''
 def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
