@@ -87,7 +87,12 @@ def frontUltraTest(BP):
 
 def getUltras(BP,port_l=3,port_r=4):
     try:
-        return [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+        ultras = [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+        # if len(x for x in ultras if x < 1000) == 3:
+        #     return ultras
+        # else:
+        #     return None
+        return ultras
     except Exception as error: 
         print("getUltras:",error)
 

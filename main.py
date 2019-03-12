@@ -4,15 +4,16 @@ import grovepi
 import numpy as np
 
 from enum import Enum
+from math import cos, radians
 
 import movement
 import sensors
 import mapping
 
 class Sensor(Enum):
-    LEFT = 0
-    RIGHT = 1
-    FRONT = 2 
+    FRONT = 0
+    LEFT = 1
+    RIGHT = 2
 
 class Calibration:
     def __init__(self,BP,imu_calib,gyro):
@@ -63,20 +64,27 @@ def calibrate(BP):
 
     return imu_calib
 
-def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 8,exit_dist = 30,sensor = Sensor.RIGHT):
+def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 12,exit_dist = 30,sensor = Sensor.RIGHT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
         errors_p = [0,0,0]
         integs = [0,0,0]
         dt = .1
+        cur_angle = 0
+        act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
 
         while True:
             # center robot when trvl corridors
-            while errors[0] < 0 and errors[1] >= -bfr_dist and errors[2] >= -bfr_dist:
-                errors = np.subtract(set_dists, sensors.getUltras(BP))
+            turn_ang = movement.parallelToWall(BP,cur_angle,sensor)
+            movement.turnPi(BP, turn_ang - sensors.gyroVal(BP))
+
+            #while ultras[0] > set_dists[0] and ultras[1] <= set_dists[1] + bfr_dist and ultras[2] <= set_dists[2] + bfr_dist:
+            while True:
+                print(act_dist)
+                errors = np.subtract(set_dists, act_dist)
                 print("errors: %d %d %d",errors[0],errors[1],errors[2])
-                integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))              
+                integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))             
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
 
@@ -84,11 +92,12 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 8,exit_dis
                     #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
                     #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
                     movement.setSpeed(BP, speed - outputs[2], speed + outputs[2])  
-                else:
+                elif sensor == Sensor.LEFT:
                     #apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
                     #apprch left wall --> negative error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
                     movement.setSpeed(BP, speed + outputs[1], speed - outputs[1]) 
 
+                act_dist = np.multiply(sensors.getUltras(BP),cos(radians(sensors.gyroVal(BP))))
                 time.sleep(dt)
 
             movement.setSpeed(BP,0,0)
@@ -100,32 +109,37 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .2,ki = .065,bfr_dist = 8,exit_dis
 
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                movement.turnPi(BP,180)
+                turn_ang = 180
             #left option only
             elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                movement.turnPi(BP,-90)
+                turn_ang = -90
             #right option only
             elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                movement.turnPi(BP,90)
+                turn_ang = 90
             #right and left options
             elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                movement.turnPi(BP, 90)
+                turn_ang = 90
             #left and forward
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                movement.turnPi(BP, 90)
+                turn_ang = 90
             #right and forward
             elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                movement.turnPi(BP, 90)
+                turn_ang = 90
             #4 way intersection
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                movement.turnPi(BP, 90)
+                turn_ang = 90
             else:
-                print("I don't know what to do. WTF ZACH!!!")
+                print("Well, sheit.....")
+                print("front: %d | left: %d | right: %d",cur_front,cur_left,cur_right)
+            
+            cur_angle += turn_ang
+            movement.turnPi(BP,turn_ang)
 
             #drive forward until walls on each side and path ahead (normal)
             while cur_front <= set_dists[0] or cur_left >= set_dists[1] + bfr_dist or cur_right >= set_dists[2] + bfr_dist:
                 movement.setSpeed(BP,speed,speed)
                 time.sleep(.1)
+            
          
     except Exception as error: 
         print("mazeNav:",error)
@@ -148,8 +162,8 @@ if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
 
-    #sensors.gyroTest(BP)
-    #sensors.ultrasTest(BP)
+    # sensors.gyroTest(BP)
+    # sensors.ultrasTest(BP)
     # sensors.imuMagTest()
     # sensors.irTest()
     # movement.speedControl(BP,imu_calib,8,25)
@@ -159,7 +173,7 @@ if __name__ == '__main__':
     # pts = [(0,0),(2,2),(-3,-1),(4,-2),(0,0)]
     # navPointsInSeq(BP,imu_calib,5,pts,5)
 
-    movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
+    # movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
 
-    # set_dists = [5,11.5,11.5]
-    # mazeNav(BP,imu_calib,5,set_dists)
+    set_dists = [10,11.5,11.5]
+    mazeNav(BP,imu_calib,5,set_dists, kp=.5, ki=.1,sensor=Sensor.LEFT)

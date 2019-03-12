@@ -23,6 +23,8 @@ from sensors import irTest
 from sensors import irVal
 from sensors import hazardCheck
 
+from main import Sensor
+
 class Hazard(Enum):
     NO_HAZARDS = 0
     CHECK_HAZARDS = 1
@@ -173,6 +175,33 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         print("turn_pi:",error)
     except KeyboardInterrupt:
         stop(BP)
+
+def parallelToWall(BP, init_ang, sensor = Sensor.RIGHT):
+    min_dist = maxsize
+    targ_angle = init_ang
+
+    cur_ang = gyroVal(BP)
+    cur_dist = getUltras(BP)[sensor]
+    while cur_ang <= init_ang + 35:
+        if cur_dist < min_dist:
+            min_dist = cur_dist
+            targ_angle = cur_ang
+        setSpeed(BP,3,-3)
+
+        cur_ang = gyroVal(BP)
+        cur_dist = getUltras(BP)[sensor]
+    
+    while cur_ang >= (init_ang - 35):
+        if cur_dist < min_dist:
+            min_dist = cur_dist
+            targ_angle = cur_ang
+        setSpeed(BP,-3,3)
+
+        cur_ang = gyroVal(BP)
+        cur_dist = getUltras(BP)[sensor]
+
+    return targ_angle
+
 
 def getAngle (x1, y1, x2, y2):
     try:
