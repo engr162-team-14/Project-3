@@ -116,7 +116,12 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor =
                         gyro_error_p = gyro_error
                         
                         BP.set_motor_dps(BP.PORT_C, dps + gyro_output)   
-                        BP.set_motor_dps(BP.PORT_B, dps - gyro_output)  
+                        BP.set_motor_dps(BP.PORT_B, dps - gyro_output) 
+                        act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
+
+                        if abs(act_dist[1] - set_dists[1])  > 1 and sensor == Sensor.LEFT:
+                            break
+ 
                         time.sleep(gyro_dt)
                     break
                     
@@ -125,20 +130,20 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor =
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
 
-                if sensor == Sensor.RIGHT:
-                    #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
-                    #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
-                    if(outputs[2] >= 0):
-                        setSpeed(BP, speed, speed + outputs[2]) 
-                    else:
-                        setSpeed(BP, speed - outputs[2], speed) 
-                elif sensor == Sensor.LEFT:
+                if sensor == Sensor.LEFT:
                     #apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
                     #apprch left wall --> negative error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
                     if(outputs[1] >= 0):
                         setSpeed(BP, speed + outputs[1], speed) 
                     else:
-                        setSpeed(BP, speed, speed - outputs[1]) 
+                        setSpeed(BP, speed, speed - outputs[1])
+                elif sensor == Sensor.RIGHT:
+                    #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
+                    #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
+                    if(outputs[2] >= 0):
+                        setSpeed(BP, speed, speed + outputs[2]) 
+                    else:
+                        setSpeed(BP, speed - outputs[2], speed)  
 
                 act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
 
