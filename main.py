@@ -4,7 +4,7 @@ import grovepi
 import numpy as np
 
 from enum import Enum
-from math import cos, radians
+from math import cos, radians, log, pi
 
 from movement import Sensor
 from movement import setSpeed
@@ -65,46 +65,87 @@ def calibrate(BP):
 
     return imu_calib
 
-def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,exit_dist = 30,sensor = Sensor.RIGHT):
+def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor = Sensor.LEFT,gyro_kp = .2,gyro_ki = .025):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
         errors_p = [0,0,0]
         integs = [0,0,0]
-        dt = .15
+        dt = .2            #loop iteration ~= .15 + .05 sleep
         cur_angle = sensors.gyroVal(BP)
         act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
         
+        
         while True:
-            # center robot when trvl corridors
-            turn_ang = parallelToWall(BP,cur_angle,sensor)
-            print("turn_ang:",turn_ang)
-            cur_angle += turn_ang + 10
+            '''
+            # sweep to parallel with wall
+            delt_ang1 = parallelToWall(BP, cur_angle, dtheta=30, sweep_spd = 6, sensor = sensor, dt = .1)
+            print("delt_ang1:",delt_ang1)
+            cur_angle += delt_ang1
+            
+            delt_ang2 = parallelToWall(BP, cur_angle,dtheta=15, sweep_spd = 1.5, sensor = sensor, dt = .05)
+            print("turn_ang2:",delt_ang2)
+            cur_angle -= delt_ang1
+            '''
 
-            turnPi(BP, turn_ang + 10)
-
+            
             # while ultras[0] > set_dists[0] and ultras[1] < set_dists[1] + bfr_dist and ultras[2] < set_dists[2] + bfr_dist:
             while True:
+                print(act_dist)
                 errors = np.subtract(set_dists, act_dist)
+
+                if abs(errors[1]) <= 1 and abs(cur_angle - sensors.gyroVal(BP)) > 3:
+                    if sensor == Sensor.LEFT:
+                        integs[1] = 0
+                    elif sensor == Sensor.RIGHT:
+                        integs[2] = 0
+                    turnPi(BP,cur_angle - sensors.gyroVal(BP))
+
+                    gyro_error = -1
+                    gyro_error_p = 0
+                    gyro_integ = 0
+                    gyro_dt = .1
+
+                    dps = (speed * (360/(7* pi)))
+
+                    # while ultras[0] > set_dists[0] and ultras[1] < set_dists[1] + bfr_dist and ultras[2] < set_dists[2] + bfr_dist:
+                    while True:
+                        gyro_error = cur_angle - sensors.gyroVal(BP)                         #error = system (gyro) dev from desired state (target_deg)
+                        gyro_integ = gyro_integ + (gyro_dt * (gyro_error + gyro_error_p)/2)  #integral feedback (trapez approx)
+                        gyro_output = gyro_kp * (gyro_error) + gyro_ki * (gyro_integ)        #PI feedback response
+                        gyro_error_p = gyro_error
+                        
+                        BP.set_motor_dps(BP.PORT_C, dps + gyro_output)   
+                        BP.set_motor_dps(BP.PORT_B, dps - gyro_output)  
+                        time.sleep(gyro_dt)
+                    break
+                    
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))
+
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
 
                 if sensor == Sensor.RIGHT:
                     #apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
                     #apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
-                    setSpeed(BP, speed - outputs[2], speed + outputs[2])  
+                    if(outputs[2] >= 0):
+                        setSpeed(BP, speed, speed + outputs[2]) 
+                    else:
+                        setSpeed(BP, speed - outputs[2], speed) 
                 elif sensor == Sensor.LEFT:
                     #apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
                     #apprch left wall --> negative error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
-                    setSpeed(BP, speed + outputs[1], speed - outputs[1]) 
+                    if(outputs[1] >= 0):
+                        setSpeed(BP, speed + outputs[1], speed) 
+                    else:
+                        setSpeed(BP, speed, speed - outputs[1]) 
 
                 act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
 
-                time.sleep(.01)
+                time.sleep(.05)
             
             ###Next steps -- junctions
-            ''''
+            '''
             setSpeed(BP,0,0)
             
             #check for junction cases
@@ -183,4 +224,4 @@ if __name__ == '__main__':
     # movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
 
     set_dists = [10,11.5,11.5]
-    mazeNav(BP,imu_calib,6,set_dists, kp=.4, ki=.01,sensor=Sensor.LEFT)
+    mazeNav(BP,imu_calib,4,set_dists, kp=.2, ki=0.001 ,sensor=Sensor.LEFT)

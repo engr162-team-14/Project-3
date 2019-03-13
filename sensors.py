@@ -85,9 +85,9 @@ def frontUltraTest(BP):
     except KeyboardInterrupt:
         BP.reset_all()
 
-def getUltras(BP,port_l=3,port_r=4):
+def getUltras(BP,port_f=3,port_r=4):
     try:
-        ultras = [frontUltraVal(BP),grovepi.ultrasonicRead(port_l),grovepi.ultrasonicRead(port_r)]
+        ultras = [grovepi.ultrasonicRead(port_f),BP.get_sensor(BP.PORT_3),grovepi.ultrasonicRead(port_r)]
         # if len(x for x in ultras if x < 1000) == 3:
         #     return ultras
         # else:
