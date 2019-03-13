@@ -19,10 +19,6 @@ class Map:
         return self.__grid
     @grid.setter
     def grid(self, grid):
-        # if x < 0:
-        #     self.__ = 0
-        # elif x > 1000:
-        #     self.__x = 1000
         self.__grid = grid
     def findNearestUnexp(self,):
         pass

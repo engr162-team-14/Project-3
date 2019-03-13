@@ -23,7 +23,10 @@ from sensors import irTest
 from sensors import irVal
 from sensors import hazardCheck
 
-from main import Sensor
+class Sensor(Enum):
+    FRONT = 0
+    LEFT = 1
+    RIGHT = 2
 
 class Hazard(Enum):
     NO_HAZARDS = 0
@@ -177,30 +180,68 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
         stop(BP)
 
 def parallelToWall(BP, init_ang, sensor = Sensor.RIGHT):
-    min_dist = maxsize
-    targ_angle = init_ang
-
-    cur_ang = gyroVal(BP)
-    cur_dist = getUltras(BP)[sensor]
-    while cur_ang <= init_ang + 35:
-        if cur_dist < min_dist:
-            min_dist = cur_dist
-            targ_angle = cur_ang
-        setSpeed(BP,3,-3)
-
+    try:
+        dtheta = 45
+        min_dist = maxsize
+        targ_angle = init_ang
+        
         cur_ang = gyroVal(BP)
-        cur_dist = getUltras(BP)[sensor]
-    
-    while cur_ang >= (init_ang - 35):
-        if cur_dist < min_dist:
-            min_dist = cur_dist
-            targ_angle = cur_ang
-        setSpeed(BP,-3,3)
+        if sensor == Sensor.RIGHT:
+            cur_dist = getUltras(BP)[2]
+            while cur_ang <= (init_ang + dtheta):
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,3,-3)
 
-        cur_ang = gyroVal(BP)
-        cur_dist = getUltras(BP)[sensor]
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[2]
+                time.sleep(.1)
+            
+            while cur_ang >= (init_ang - dtheta):
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,-3,3)
 
-    return targ_angle
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[2]
+                time.sleep(.1)
+
+        elif sensor == Sensor.LEFT:
+            cur_dist = getUltras(BP)[1]
+            while cur_ang <= (init_ang + dtheta):
+                print("C || cur_ang: %d | init_ang: %d | target_angle: %d | cur_dist: %d | min_dist: %d" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,3,-3)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[1]
+                time.sleep(.1)
+
+            while cur_ang >= (init_ang - dtheta):
+                print("CC || cur_ang: %d | init_ang: %d | target_angle: %d | cur_dist: %d | min_dist: %d" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,-3,3)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[1]
+                time.sleep(.1)
+        
+        turnPi(BP,dtheta,.15,.0225)
+
+        return targ_angle - init_ang
+
+    except Exception as error: 
+        print("parallelToWall",error)
+    except KeyboardInterrupt:
+        stop(BP) 
 
 
 def getAngle (x1, y1, x2, y2):
@@ -229,6 +270,7 @@ def getAngle (x1, y1, x2, y2):
             else:
                 angle = angle
         return angle
+
     except Exception as error: 
         print("angle",error)
 
