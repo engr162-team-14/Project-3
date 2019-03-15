@@ -427,7 +427,8 @@ kd = .1
 
 error = set - curr
 integ = integ + (dt * error * .5)                    #triangular approx
-integ = integ + (dt * (error + error_p)/2)           #trapezoidal approx
+    or 
+integ = integ + (dt * (error + error_p)/2)           #trapezoidal approx (better)
 deriv = (error - error_p)/dt
 
 output  = (kp * error) + (ki * integral)  + (kd * deriv)
