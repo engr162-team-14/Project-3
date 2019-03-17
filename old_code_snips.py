@@ -1,4 +1,34 @@
 '''
+right parallel to wall
+
+
+if sensor == Sensor.RIGHT:
+            cur_dist = getUltras(BP)[2]
+            while cur_ang <= (init_ang + dtheta):
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,sweep_spd,-sweep_spd)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[2]
+                time.sleep(dt)
+            setSpeed(BP,0,0)
+            
+            while cur_ang >= (init_ang - dtheta):
+                if cur_dist < min_dist:
+                    min_dist = cur_dist
+                    targ_angle = cur_ang
+                setSpeed(BP,-sweep_spd,sweep_spd)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)[2]
+                time.sleep(dt)
+            setSpeed(BP,0,0)
+'''
+
+
+'''
 checking for gyro off
 abs(cur_angle - sensors.gyroVal(BP)) > 4
 '''

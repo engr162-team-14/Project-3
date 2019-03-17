@@ -180,42 +180,18 @@ def turnPiAbs(BP,deg,kp = .2,ki = .025):
     except KeyboardInterrupt:
         stop(BP)
 
-def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.LEFT, dt = .05):
+def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEFT, dt = .05):
     try:
         min_dist = maxsize
         targ_angle = init_ang
         
         cur_ang = gyroVal(BP)
-        if sensor == Sensor.RIGHT:
-            cur_dist = getUltras(BP)[2]
-            while cur_ang <= (init_ang + dtheta):
-                if cur_dist < min_dist:
-                    min_dist = cur_dist
-                    targ_angle = cur_ang
-                setSpeed(BP,sweep_spd,-sweep_spd)
-
-                cur_ang = gyroVal(BP)
-                cur_dist = getUltras(BP)[2]
-                time.sleep(dt)
-            setSpeed(BP,0,0)
-            
-            while cur_ang >= (init_ang - dtheta):
-                if cur_dist < min_dist:
-                    min_dist = cur_dist
-                    targ_angle = cur_ang
-                setSpeed(BP,-sweep_spd,sweep_spd)
-
-                cur_ang = gyroVal(BP)
-                cur_dist = getUltras(BP)[2]
-                time.sleep(dt)
-            setSpeed(BP,0,0)
-
-        elif sensor == Sensor.LEFT:
-            cur_dist = leftUltraVal(BP)
+        cur_dist = leftUltraVal(BP)
+        if sensor == Sensor.LEFT:
             while cur_ang <= (init_ang + dtheta):
                 print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
                     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
-                if cur_dist >= 1 and cur_dist < min_dist:
+                if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
                 setSpeed(BP,sweep_spd,-sweep_spd)
@@ -225,10 +201,12 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
                 time.sleep(dt)
             setSpeed(BP,0,0)
 
+            cur_ang = gyroVal(BP)
+            cur_dist = leftUltraVal(BP)
             while cur_ang >= (init_ang - dtheta):
                 print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
                     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
-                if cur_dist >= 1 and cur_dist < min_dist:
+                if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
                 setSpeed(BP,-sweep_spd,sweep_spd)
@@ -238,7 +216,52 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
                 time.sleep(dt)
             setSpeed(BP,0,0)
         
-        turnPi(BP, targ_angle - gyroVal(BP),.1,0.0,1)
+        turnPi(BP, targ_angle - gyroVal(BP),.075,0.0,0)
+
+        return targ_angle - init_ang
+
+    except Exception as error: 
+        print("parallelToWall",error)
+    except KeyboardInterrupt:
+        stop(BP) 
+
+def parallelToWallDuo(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEFT, dt = .05):
+    try:
+        min_dist = maxsize
+        targ_angle = init_ang
+        
+        cur_ang = gyroVal(BP)
+        cur_dist = getUltras(BP)
+        if sensor == Sensor.LEFT:
+            while cur_ang <= (init_ang + dtheta):
+                print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist[1] + cur_dist[2],min_dist))
+                if cur_dist[1] >= 3 and cur_dist[1] + cur_dist[2] < min_dist:
+                    min_dist = cur_dist[1] + cur_dist[2]
+                    targ_angle = cur_ang
+                setSpeed(BP,sweep_spd,-sweep_spd)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)
+                time.sleep(dt)
+            setSpeed(BP,0,0)
+
+            cur_ang = gyroVal(BP)
+            cur_dist = getUltras(BP)
+            while cur_ang >= (init_ang - dtheta):
+                print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist[1] + cur_dist[2],min_dist))
+                if cur_dist[1] >= 3 and cur_dist[1] + cur_dist[2] < min_dist:
+                    min_dist = cur_dist[1] + cur_dist[2]
+                    targ_angle = cur_ang
+                setSpeed(BP,-sweep_spd,sweep_spd)
+
+                cur_ang = gyroVal(BP)
+                cur_dist = getUltras(BP)
+                time.sleep(dt)
+            setSpeed(BP,0,0)
+        
+        turnPi(BP, targ_angle - gyroVal(BP),.1,0.0,0)
 
         return targ_angle - init_ang
 
