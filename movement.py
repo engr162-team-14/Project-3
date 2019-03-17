@@ -8,9 +8,9 @@ from enum import Enum
 from sensors import gyroCalib
 from sensors import gyroVal
 from sensors import gyroTest
-from sensors import frontUltraCalib
-from sensors import frontUltraVal
-from sensors import frontUltraTest
+from sensors import leftUltraCalib
+from sensors import leftUltraVal
+from sensors import leftUltraTest
 from sensors import getUltras
 from sensors import imuCalib
 from sensors import imuFiltered
@@ -134,15 +134,16 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
     except KeyboardInterrupt:
         stop(BP)
 
-def turnPi(BP,deg,kp = .2,ki = .025):
+def turnPi(BP,deg,kp = .2,ki = .025, dead_band = 1):
     try:
+        setSpeed(BP,0,0)
         target_deg = gyroVal(BP) + deg
         error = maxsize
         error_p = 0
         integ = 0
         dt = .1
         
-        while  abs(error) > 1:
+        while abs(error) > dead_band:
             error = target_deg - gyroVal(BP)            #error - system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
             output = kp * (error) + ki * (integ)        #PI feedback response
@@ -210,7 +211,7 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
             setSpeed(BP,0,0)
 
         elif sensor == Sensor.LEFT:
-            cur_dist = getUltras(BP)[1]
+            cur_dist = leftUltraVal(BP)
             while cur_ang <= (init_ang + dtheta):
                 print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
                     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
@@ -220,7 +221,7 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
                 setSpeed(BP,sweep_spd,-sweep_spd)
 
                 cur_ang = gyroVal(BP)
-                cur_dist = getUltras(BP)[1]
+                cur_dist = leftUltraVal(BP)
                 time.sleep(dt)
             setSpeed(BP,0,0)
 
@@ -233,11 +234,11 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
                 setSpeed(BP,-sweep_spd,sweep_spd)
 
                 cur_ang = gyroVal(BP)
-                cur_dist = getUltras(BP)[1]
+                cur_dist = leftUltraVal(BP)
                 time.sleep(dt)
             setSpeed(BP,0,0)
         
-        turnPi(BP, targ_angle - gyroVal(BP),.1,0.0)
+        turnPi(BP, targ_angle - gyroVal(BP),.1,0.0,1)
 
         return targ_angle - init_ang
 

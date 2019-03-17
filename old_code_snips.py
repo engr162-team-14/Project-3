@@ -1,4 +1,39 @@
 '''
+checking for gyro off
+abs(cur_angle - sensors.gyroVal(BP)) > 4
+'''
+
+
+'''
+gyro guiding once reached set dist
+
+                    gyro_error = -1
+                    gyro_error_p = 0
+                    gyro_integ = 0
+                    gyro_dt = .1
+
+                    dps = (speed * (360/(7* pi)))
+
+                    # while ultras[0] > set_dists[0] and ultras[1] < set_dists[1] + bfr_dist and ultras[2] < set_dists[2] + bfr_dist:
+                    while True:
+                        gyro_error = cur_angle - sensors.gyroVal(BP)                         #error = system (gyro) dev from desired state (target_deg)
+                        gyro_integ = gyro_integ + (gyro_dt * (gyro_error + gyro_error_p)/2)  #integral feedback (trapez approx)
+                        gyro_output = gyro_kp * (gyro_error) + gyro_ki * (gyro_integ)        #PI feedback response
+                        gyro_error_p = gyro_error
+                        
+                        BP.set_motor_dps(BP.PORT_C, dps + gyro_output)   
+                        BP.set_motor_dps(BP.PORT_B, dps - gyro_output) 
+                        act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
+
+                        if abs(act_dist[1] - set_dists[1]) > 1.5 and sensor == Sensor.LEFT:
+                            break
+ 
+                        time.sleep(gyro_dt)
+                    '''
+
+
+
+'''
 mazNav pt 1 (wall guiding in corridors)
             # sweep to parallel with wall
             turn_ang = parallelToWall(BP,cur_angle,sweep_spd = 1.5, sensor = sensor)

@@ -45,7 +45,7 @@ class Calibration:
 def calibrate(BP):
     #gyro = sensors.gyroCalib(BP)
     sensors.gyroCalib(BP)
-    sensors.frontUltraCalib(BP)
+    sensors.leftUltraCalib(BP)
     sensors.irCalib()
 
     calib = sensors.imuCalib()
@@ -65,7 +65,7 @@ def calibrate(BP):
 
     return imu_calib
 
-def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor = Sensor.LEFT,gyro_kp = .2,gyro_ki = .025):
+def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor = Sensor.LEFT,gyro_kp = .2,gyro_ki = .005):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         errors = [-1,1,1]
@@ -75,31 +75,36 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor =
         cur_angle = sensors.gyroVal(BP)
         act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
         
-        
         while True:
-            '''
             # sweep to parallel with wall
-            delt_ang1 = parallelToWall(BP, cur_angle, dtheta=30, sweep_spd = 6, sensor = sensor, dt = .1)
+            dead_band_dist = .5
+            delt_ang1 = parallelToWall(BP, cur_angle, dtheta=30, sweep_spd = 4, sensor = sensor, dt = .1)
+            sensors.printGyroVal(BP)
             print("delt_ang1:",delt_ang1)
             cur_angle += delt_ang1
             
-            delt_ang2 = parallelToWall(BP, cur_angle,dtheta=15, sweep_spd = 1.5, sensor = sensor, dt = .05)
-            print("turn_ang2:",delt_ang2)
-            cur_angle -= delt_ang1
             '''
-
+            delt_ang2 = parallelToWall(BP, cur_angle,dtheta=15, sweep_spd = 1.5, sensor = sensor, dt = .1)
+            print("delt_ang2:",delt_ang2)
+            #   cur_angle -= delt_ang1
+            '''
             
             # while ultras[0] > set_dists[0] and ultras[1] < set_dists[1] + bfr_dist and ultras[2] < set_dists[2] + bfr_dist:
             while True:
-                print(act_dist)
                 errors = np.subtract(set_dists, act_dist)
 
-                if abs(errors[1]) <= 1 and abs(cur_angle - sensors.gyroVal(BP)) > 3:
+                if abs(errors[1]) <= dead_band_dist:
+                    dead_band_dist = 4
+
+                    # integral windup reset
                     if sensor == Sensor.LEFT:
                         integs[1] = 0
                     elif sensor == Sensor.RIGHT:
                         integs[2] = 0
+                    
+                    sensors.printGyroVal(BP)
                     turnPi(BP,cur_angle - sensors.gyroVal(BP))
+                    sensors.printGyroVal(BP)
 
                     gyro_error = -1
                     gyro_error_p = 0
@@ -109,7 +114,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor =
                     dps = (speed * (360/(7* pi)))
 
                     # while ultras[0] > set_dists[0] and ultras[1] < set_dists[1] + bfr_dist and ultras[2] < set_dists[2] + bfr_dist:
-                    while True:
+                    while abs(act_dist[1] - set_dists[1]) < dead_band_dist:
                         gyro_error = cur_angle - sensors.gyroVal(BP)                         #error = system (gyro) dev from desired state (target_deg)
                         gyro_integ = gyro_integ + (gyro_dt * (gyro_error + gyro_error_p)/2)  #integral feedback (trapez approx)
                         gyro_output = gyro_kp * (gyro_error) + gyro_ki * (gyro_integ)        #PI feedback response
@@ -119,11 +124,10 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 12,sensor =
                         BP.set_motor_dps(BP.PORT_B, dps - gyro_output) 
                         act_dist = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
 
-                        if abs(act_dist[1] - set_dists[1])  > 1 and sensor == Sensor.LEFT:
-                            break
+                        sensors.printGyroVal(BP)
  
                         time.sleep(gyro_dt)
-                    break
+                    dead_band_dist = .5
                     
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))
 
@@ -229,4 +233,4 @@ if __name__ == '__main__':
     # movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
 
     set_dists = [10,11.5,11.5]
-    mazeNav(BP,imu_calib,4,set_dists, kp=.2, ki=0.001 ,sensor=Sensor.LEFT)
+    mazeNav(BP,imu_calib,10,set_dists, kp=.5, ki=0.001 ,sensor=Sensor.LEFT)
