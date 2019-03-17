@@ -215,7 +215,7 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
             while cur_ang <= (init_ang + dtheta):
                 print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
                     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
-                if cur_dist < min_dist:
+                if cur_dist >= 1 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
                 setSpeed(BP,sweep_spd,-sweep_spd)
@@ -228,7 +228,7 @@ def parallelToWall(BP, init_ang, dtheta = 45, sweep_spd = 1.5, sensor = Sensor.L
             while cur_ang >= (init_ang - dtheta):
                 print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
                     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
-                if cur_dist < min_dist:
+                if cur_dist >= 1 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
                 setSpeed(BP,-sweep_spd,sweep_spd)
