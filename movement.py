@@ -126,7 +126,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
-        #delete later vvvvvvvvvvvv
+        # ***delete later vvvvvvvvvvvv***
         if haz_mode == Hazard.CHECK_HAZARDS:
                 return pos
     except Exception as error: 

@@ -6,6 +6,12 @@ import time
 import numpy as np
 from enum import Enum
 
+# class Dir(Enum):
+#     UP = 0
+#     DOWN = 1
+#     LEFT = 2
+#     RIGHT = 3
+
 class State(Enum):
     UNEXPL = -1
     UNKWN = 0
@@ -14,6 +20,7 @@ class State(Enum):
     HEAT = 2
     MAG = 3
     EXIT = 4
+    CUR = 1234
 
 class Unit(Enum):
     CM = 0
@@ -71,6 +78,11 @@ class Map:
     @cur_pt.setter
     def cur_pt(self, cur_pt):
         self.__cur_pt = cur_pt
+    def appendRow(self):
+        np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
+    def appendCol(self):
+        for r in self.grid:
+            np.append(r,State.UNKWN)
     def addPoint(self,pt,point_type = State.EXPL):
         pass
     def updateLocation(self):
