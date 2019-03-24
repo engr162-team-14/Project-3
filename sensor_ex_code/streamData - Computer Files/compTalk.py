@@ -200,7 +200,7 @@ class CompTalk:
   
   def getData( self, showRawData=False):
     # Waits for and recieves all data in a communication attempt
-    #try:
+    try:
       # Wait for the data
       data = self._recvAndCheck()
       
@@ -235,9 +235,9 @@ class CompTalk:
       
       return content
       
-    #except packetException:
-    #  print('Listening for resent data...')
-    #  self.getData( showRawData=showRawData)
+    except packetException:
+     print('Listening for resent data...')
+     self.getData( showRawData=showRawData)
 
   
   def streamData( self, showRawData=False):
@@ -260,7 +260,7 @@ class CompTalk:
     try:
       while self.streaming:
         d = self.getData()
-        # print(d)
+        print(d)
         self.dataStream.append(d)
         
     except KeyboardInterrupt:

@@ -54,7 +54,7 @@ showSendData = False
 
 
 def sampleValues( d):
-  t, sampleRate = setParameters()
+  params, sampleRate = setParameters()
   sampleRate = 1 / sampleRate
 
   time.clock()

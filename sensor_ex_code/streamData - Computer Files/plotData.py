@@ -166,7 +166,7 @@ def animate(i):
           for j, ydata in enumerate(row):
             if (len(ydata) > len(xdata)):
               print("overflow!")
-              ydisp = ydata[-1*len(xData):]
+              ydisp = ydata[-1*len(xdata):]
             else:
               ydisp = ydata
             axarr[i][j].plot(xdata, ydisp)
@@ -199,9 +199,13 @@ try:
   # Initiate the data stream
   content = pi.streamData(showRawData=False)
   # Start the animation
-  cid = fig.canvas.mpl_connect('key_press_event', pausePlot)
-  ani = FuncAnimation(fig, animate, interval=refreshTime)
-  plt.show()
+  cid = fig.canvas.mpl_connect('key_press_event', pausePlot)  # pause plot
+  ani = FuncAnimation(fig, animate, interval=refreshTime)     # create plot animation
+  plt.show()                                                  # show plot 
+  
+  # d = pi.getData()
+  # print(d)
+  
 
 except:
   print('Ending Stream...')

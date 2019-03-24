@@ -7,6 +7,7 @@ from enum import Enum
 from math import cos, radians, log, pi
 
 from movement import Sensor
+from movement import Hazard
 from movement import setSpeed
 from movement import turnPi
 from movement import speedControl
@@ -213,6 +214,38 @@ def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 5):
     except KeyboardInterrupt:
         stop(BP)
 
+def pocTasks(BP,imu_calib,task_num):
+    ### POC 1: Naviage with walls ###
+    if task_num == 1 or task_num == 12:
+        set_dists = [25,11,11]
+        mazeNav(BP,imu_calib,10,set_dists, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
+
+    ### POC 2: Point turning ###
+    elif task_num == 2:
+        turnPi(BP,11)
+
+    ### POC 3: Avoiding hazards ###
+    elif task_num == 3:
+        pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,Hazard.CHECK_HAZARDS,[30,18,30])
+
+    ### POC 4: Point to point navigation ###
+    elif task_num == 4:
+        pts = [(0,0),(2,2),(-3,-1),(4,-2),(0,0)]
+        navPointsInSeq(BP,imu_calib,5,pts,5)
+
+    ### POC 5: Mapping hallway ###
+    elif task_num == 5 or task_num == 56:
+        pass
+
+    ### POC 3/4: Point to point with hazards ###
+    elif task_num == 34:
+        pass
+
+    ### POC ALL: Go through maze, mapping hazards and path; deposit cargo once out
+    else:
+        pass
+
+    
 
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
@@ -224,12 +257,4 @@ if __name__ == '__main__':
     # sensors.irTest()
     # movement.speedControl(BP,imu_calib,8,25)
 
-    # turnPi(BP,11)
-
-    # pts = [(0,0),(2,2),(-3,-1),(4,-2),(0,0)]
-    # navPointsInSeq(BP,imu_calib,5,pts,5)
-
-    # movement.pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,movement.Hazard.CHECK_HAZARDS,[30,18,30])
-
-    set_dists = [25,11,11]
-    mazeNav(BP,imu_calib,10,set_dists, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
+    

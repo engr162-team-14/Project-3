@@ -5,16 +5,15 @@ import grovepi
 
 # Connect the Grove Ultrasonic Ranger to digital port D4
 # SIG,NC,VCC,GND
-ultrasonic_ranger = 4
+ultrasonic_ranger = 3
 
-def setParameters( sampleRate=5):
+def setParameters(sampleRate=5):
   return ['x'], sampleRate
 
 
 def getData( prevData):
   # Begin Example
   x = grovepi.ultrasonicRead(ultrasonic_ranger)
-  x = 1
 
   return [x]
   # End Example
