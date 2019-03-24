@@ -268,6 +268,5 @@ if __name__ == '__main__':
     # sensors.irTest()
     # movement.speedControl(BP,imu_calib,8,25)
 
-    pocTasks(BP,imu_calib,1)
+    # pocTasks(BP,imu_calib,1)
 
-    
