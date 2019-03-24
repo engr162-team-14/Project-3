@@ -215,7 +215,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
         stop(BP)
 
 
-def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 5):
+def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 40):
     try:
         for x in range(len(points) - 1):
             pt_2_pt(BP, imu_calib, speed, points[x], points[x+1],length_conv)
@@ -237,12 +237,12 @@ def pocTasks(BP,imu_calib,task_num):
 
     ### POC 3: Avoiding hazards ###
     elif task_num == 3:
-        pt_2_pt(BP,imu_calib,5,(0,0),(12,12),5,Hazard.CHECK_HAZARDS,[30,18,30])
+        pt_2_pt(BP,imu_calib,15,(0,0),(3,3),40,Hazard.CHECK_HAZARDS,[113.14,18,30])
 
     ### POC 4: Point to point navigation ###
     elif task_num == 4:
-        pts = [(0,0),(2,2),(-3,-1),(4,-2),(0,0)]
-        navPointsInSeq(BP,imu_calib,5,pts,5)
+        pts = [(0,0),(2,2),(3,1),(4,3),(0,0)]
+        navPointsInSeq(BP,imu_calib,15,pts)
 
     ### POC 5: Mapping hallway ###
     elif task_num == 5 or task_num == 56:
@@ -268,6 +268,6 @@ if __name__ == '__main__':
     # sensors.irTest()
     # movement.speedControl(BP,imu_calib,8,25)
 
-    pocTasks(BP,imu_calib,1)
+    pocTasks(BP,imu_calib,3)
 
     
