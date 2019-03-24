@@ -311,7 +311,7 @@ def getDistance (x1, y1, x2, y2):
     except Exception as error: 
         print("distance",error)
         
-def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 5, haz_mode = Hazard.NO_HAZARDS, est_avd_dists = [50,18,30]):
+def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 40, haz_mode = Hazard.NO_HAZARDS, est_avd_dists = [50,18,30]):
     '''est_avd_dists = [dist to hazard zone, dist needed to traverse horiz, dist needed to traverse vertically]'''
     try:
         pt_1 = [d * length_conv for d in pt_1]

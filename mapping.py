@@ -29,8 +29,8 @@ class Unit(Enum):
 class Map:
     def __init__(self, origin = [0,0], map_num = 0, team = 14, unit = Unit.CM):
         self.origin = origin
-        self.grid = np.full((origin[1],origin[0]),State.UNKWN)
-        self.grid[-origin[1]][origin[0] - 1] = State.ORIG
+        self.grid = np.full((origin[1] + 1,origin[0] + 1),State.UNKWN)
+        self.grid[-origin[1] - 1][origin[0]] = State.ORIG
         self.map_num = map_num
         self.team = team
         self.unit = unit
@@ -84,7 +84,11 @@ class Map:
         for r in self.grid:
             np.append(r,State.UNKWN)
     def addPoint(self,pt,point_type = State.EXPL):
-        pass
+        if pt[0] > len(self.grid[0]):
+            appendCol()
+        elif pt[1] > len(self.grid)
+            appendRow
+        self.grid[-origin[1]][origin[0] - 1] = point_type
     def updateLocation(self):
         pass
     def findNearestUnexp(self,):
