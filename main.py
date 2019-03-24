@@ -162,27 +162,34 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                 turn_ang = 180
+                print("dead end")
             #left option only
             elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                 turn_ang = -90
+                print("left option only")
             #right option only
             elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 turn_ang = 90
+                print("right option only")
             #right and left options
             elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 turn_ang = 90
+                print("right and left options")
             #left and forward
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                 turn_ang = -90
+                print("left and forward options")
             #right and forward
             elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 turn_ang = 90
+                print("right and forward options")
             #4 way intersection
             elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
                 turn_ang = 90
+                print("4 way intersection")
             else:
                 turn_ang = 0
-                print("Well, sheit.....")
+                print("Well, sheit...problems...")
 
             speedControl(BP,imu_calib,speed,10)
             cur_angle += turn_ang
@@ -256,5 +263,7 @@ if __name__ == '__main__':
     # sensors.imuMagTest()
     # sensors.irTest()
     # movement.speedControl(BP,imu_calib,8,25)
+
+    pocTasks(BP,imu_calib,1)
 
     
