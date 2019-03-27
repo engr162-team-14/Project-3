@@ -379,7 +379,8 @@ def pocTasks(BP,imu_calib,task_num):
 
     ### POC 3: Avoiding hazards ###
     elif task_num == 3:
-        pt_2_pt(BP,imu_calib,15,(0,0),(3,3),40,Hazard.CHECK_HAZARDS,[113.14,18,30])
+        pt_2_pt(BP,imu_calib,15,(0,0),(3,3),40,Hazard.CHECK_HAZARDS,[113.14,42,60])
+        #                          (15 * 1.65) less than dist from pts ^     
 
     ### POC 4: Point to point navigation ###
     elif task_num == 4:
@@ -408,7 +409,7 @@ if __name__ == '__main__':
     # sensors.ultrasTest(BP)
     # sensors.imuMagTest()
     # sensors.irTest()
-    # movement.speedControl(BP,imu_calib,8,25)
+    # speedControl(BP,imu_calib,12,200)
 
     # pocTasks(BP,imu_calib,1)
 
