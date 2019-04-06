@@ -134,7 +134,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
     except KeyboardInterrupt:
         stop(BP)
 
-def turnPi(BP,deg,kp = .2,ki = .025, dead_band = 1):
+def turnPi(BP,deg,kp = .15,ki = 0.0, dead_band = 1):
     try:
         setSpeed(BP,0,0)
         target_deg = gyroVal(BP) + deg
@@ -273,29 +273,37 @@ def parallelToWallDuo(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.
 
 def getAngle (x1, y1, x2, y2):
     try:
-        veci = x2 - x1
-        vecj = y2 - y1
-        angle = math.degrees(math.atan(veci/vecj))
-
-        if(veci < 0):
-            if(vecj == 0):
-                angle = -90
-            elif(vecj < 0):
-                angle = angle - 180
-            else:
-                angle = angle
-        elif(veci == 0):
-            if(vecj > 0):
-                angle = 0
-            else:
-                angle = 180
-        else:
-            if(vecj == 0):
+        if(y2 == y1):
+            if(x2 > x1):
                 angle = 90
-            elif(vecj < 0):
-                angle = angle + 180
+            elif(x2 < x1):
+                angle = -90
             else:
-                angle = angle
+                angle = 0
+        else:
+            veci = x2 - x1
+            vecj = y2 - y1
+            angle = math.degrees(math.atan(veci/vecj))
+
+            if(veci < 0):
+                if(vecj == 0):
+                    angle = -90
+                elif(vecj < 0):
+                    angle = angle - 180
+                else:
+                    angle = angle
+            elif(veci == 0):
+                if(vecj > 0):
+                    angle = 0
+                else:
+                    angle = 180
+            else:
+                if(vecj == 0):
+                    angle = 90
+                elif(vecj < 0):
+                    angle = angle + 180
+                else:
+                    angle = angle
         return angle
 
     except Exception as error: 
