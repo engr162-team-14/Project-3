@@ -86,7 +86,7 @@ def leftUltraTest(BP):
             print(snsr)
 
     except Exception as error: 
-        print("frontUltraTest:",error)
+        print("leftUltraTest:",error)
     except KeyboardInterrupt:
         BP.reset_all()
 

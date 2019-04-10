@@ -129,12 +129,12 @@ class Map:
         else:
             print("Error: Direction uninitialized or non-real value")
     def evalJunction(self):
-        if len(self.junc_instr) != 0:
+        if len(self.junc_instr) > 0:
             return self.junc_instr.pop(0)
         else:
             return None
     def findNearestUnexp(self):
-        return turn_instruc
+        return None
     def _convertMap(self):
         for r in self.grid:
             for c in self.grid:
@@ -147,7 +147,7 @@ class Map:
         new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
         self.hazard_info.append(new_hazard)
         self._addPoint(loc,haz_type)
-    def pushInfo(self,):
+    def pushInfo(self):
         self._convertMap()
         info = {"map": self.grid,
                 "hazard table": self.hazard_info 

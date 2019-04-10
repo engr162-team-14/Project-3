@@ -1,3 +1,98 @@
+
+
+'''
+def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
+    try:
+        distance = length_conv * getDistance(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        angle = init_ang - getAngle(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        turnPi(BP, angle)
+        if haz_mode == Hazard.NO_HAZARDS:
+            speedControl(BP, imu_calib, speed, distance, haz_mode = haz_mode)
+        else:
+            pos = speedControl(BP, imu_calib,speed,distance, haz_mode = haz_mode)
+            # calculate new route and get there...
+        turnPi(BP, -angle)
+    except Exception as error: 
+        print("pt_2_pt_abs",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+Isaac = gyroVal(BP)
+
+def go_to_90 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = 90 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_90",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_180 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = 180 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_180",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_90_2 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = -90 + Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_90_2",error)
+    except KeyboardInterrupt:
+        stop(BP)
+def go_to_0 (BP):
+    try:
+        current = gyroVal(BP)
+        turnDegree = Isaac - current
+        return turnDegree
+    except Exception as error: 
+        print("go_to_0",error)
+    except KeyboardInterrupt:
+        stop(BP)
+
+def pt_2_pt2 (BP,imu_calib, x1, x2, y1, y2):
+    #funtion navegates the robot from one point (x1, y1) to another point (x2, y2) using the linear components
+    try:
+        veci = x2 - x1
+        vecj = y2 - y1
+        if(veci < 0):
+            deg = go_to_90(BP)
+            turnPi(BP, deg)
+            speedControl(BP, imu_calib, 6, abs(veci))
+            if(vecj < 0):
+                deg = go_to_180(BP)
+                turnPi(BP, deg)
+                speedControl(BP, imu_calib, 6, abs(vecj))
+            else:
+                deg = go_to_0(BP)
+                turnPi(BP, 0)
+                speedControl(BP, imu_calib, 6, abs(vecj))
+        else:
+            deg = go_to_90_2(BP)
+            turnPi(BP, deg)
+            speedControl(BP, imu_calib, 6, abs(veci))
+            if(vecj < 0):
+                go_to_180
+                turnPi(BP, deg)
+                speedControl(BP, imu_calib, 6, abs(vecj))
+            else:
+                deg = go_to_0(BP)
+                turnPi(BP, deg)
+                speedControl(BP, imu_calib, 6, abs(vecj))
+    except Exception as error: 
+        print("pt_2_pt2",error)
+    except KeyboardInterrupt:
+        stop(BP)
+            
+
+'''       
+
 '''
 right parallel to wall
 
@@ -134,4 +229,29 @@ Time of each step -- mazeNav (wall guiding)
                 init_time = time.time()
                 time.sleep(dt)
                 print("sleep - time: %d", time.time() - init_time)
+'''
+
+
+
+
+
+
+
+
+'''
+Things to integrate into code
+
+--PID
+kp = .3
+ki = .7
+kd = .1
+
+error = set - curr
+integ = integ + (dt * error * .5)                    #triangular approx
+    or 
+integ = integ + (dt * (error + error_p)/2)           #trapezoidal approx (better)
+deriv = (error - error_p)/dt
+
+output  = (kp * error) + (ki * integral)  + (kd * deriv)
+error_p = error
 '''

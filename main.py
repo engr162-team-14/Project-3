@@ -14,9 +14,13 @@ from movement import speedControl
 from movement import parallelToWall
 from movement import parallelToWallDuo
 from movement import pt_2_pt
+from movement import cargoRelease
 from movement import stop
+
 import sensors
-import mapping
+
+from mapping import Map
+from mapping import Dir
 
 class Calibration:
     def __init__(self,BP,imu_calib,gyro):
@@ -42,10 +46,7 @@ class Calibration:
     def gyro(self,gyro):
         self.__gyro = gyro
     
-
-#functional tests
 def calibrate(BP):
-    #gyro = sensors.gyroCalib(BP)
     sensors.gyroCalib(BP)
     sensors.leftUltraCalib(BP)
     sensors.irCalib()
@@ -61,15 +62,22 @@ def calibrate(BP):
         "dly": calib[6],
         "std": calib[7]
     }
+    # Map = Map(...)
     # BP = brickpi3.BrickPi3()
     # Cal = Calibration(BP,imu_calib,gyro)
     # return Cal
 
     return imu_calib
 
-def mazeMap(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor = Sensor.LEFT,gyro_kp = .2,gyro_ki = 0.0):
+def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dist = 25,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
+        origin = input("Enter origin coordinates separted by space: ").split()
+        origin = [int(i) for i in origin]
+        map_num = input("Enter map number: ")
+
+        map = Map(origin,int(map_num),direc=direc)
+
         errors = [-1,1,1]
         errors_p = [0,0,0]
         integs = [0,0,0]
@@ -86,7 +94,11 @@ def mazeMap(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             cur_angle += delt_ang1
             
             print("sonar PID init")
+            start_time = time.time()
             while act_dists[0] > set_dists[0] and act_dists[1] < set_dists[1] + bfr_dist and act_dists[2] < set_dists[2] + bfr_dist:
+                if time.time() - start_time:
+                    start_time = time.time()
+                    map.updateLocation()
                 errors = np.subtract(set_dists, act_dists)
 
                 if abs(errors[1]) <= dead_band_dist:
@@ -191,17 +203,28 @@ def mazeMap(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
                 turn_ang = 0
                 print("Well, sheit...problems...")
 
+            map_turn_ang = map.evalJunction()
+            if map_turn_ang != None:
+                turn_ang
+
             speedControl(BP,imu_calib,speed,10)
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
+            map.cur_direc += (turn_ang // 90)
 
             #drive forward until walls on each side and path ahead (normal)
             act_dists = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
-            while act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist:
+            dist_traveled = 0
+            while act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist or dist_traveled > 40:
                 setSpeed(BP,speed,speed)
                 act_dists = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
+                dist_traveled += .1 * speed 
             speedControl(BP,imu_calib,speed,5)
+
+            if dist_traveled > 40:
+                map.pushInfo()
+                break
 
             setSpeed(BP,0,0)
            
@@ -371,7 +394,7 @@ def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 40):
 def pocTasks(BP,imu_calib,task_num):
     ### POC 1: Naviage with walls ###
     if task_num == 1 or task_num == 12:
-        set_dists = [25,11,11]
+        set_dists = [35,11,11]
         mazeNav(BP,imu_calib,10,set_dists, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
 
     ### POC 2: Point turning ###
@@ -390,7 +413,8 @@ def pocTasks(BP,imu_calib,task_num):
 
     ### POC 5: Mapping hallway ###
     elif task_num == 5 or task_num == 56:
-        pass
+        set_dists = [35,11,11]
+        mazeMap(BP,imu_calib,10,set_dists,direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
 
     ### POC 3/4: Point to point with hazards ###
     elif task_num == 34:
@@ -399,8 +423,9 @@ def pocTasks(BP,imu_calib,task_num):
 
     ### POC ALL: Go through maze, mapping hazards and path; deposit cargo once out
     else:
-        pass
-
+        set_dists = [35,11,11]
+        mazeNav(BP,imu_calib,10,set_dists, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
+        cargoRelease(BP)
     
 
 if __name__ == '__main__':
@@ -408,11 +433,10 @@ if __name__ == '__main__':
     imu_calib = calibrate(BP)
 
     # sensors.gyroTest(BP)
-    # sensors.ultrasTest(BP)
+    sensors.ultrasTest(BP)
     # sensors.imuMagTest()
     # sensors.irTest()
     # speedControl(BP,imu_calib,12,200)
 
     # pocTasks(BP,imu_calib,12)
     # pocTasks(BP,imu_calib,34)
-
