@@ -353,6 +353,19 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 40, haz_mode = Haza
     except KeyboardInterrupt:
         stop(BP)  
 
+def cargoRelease(BP)
+    try:
+        ultraVals = getUltras(BP)
+        if ultraVals(1) >= 40 and ultraVals(2) >= 40 and ultraVals >= 40:
+            print("I have arrived")
+            BP.set_motor_position(BP.PORT_A, 90)
+        else
+            print("I have not arrived")
+    except Exception as error:
+        print("cargoRelease", error)
+    except KeyboardInterrupt:
+        stop(BP)
+
 
 '''
 def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):
