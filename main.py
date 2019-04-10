@@ -157,10 +157,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             #check for junction cases
             cur_front = sensors.getUltras(BP)[0]
             cur_left = sensors.getUltras(BP)[1]
-            cur_right = sensors.getUltras(BP)[2]
-            # cur_front = act_dists[0]
-            # cur_left = act_dists[1]
-            # cur_right = act_dists[2]  
+            cur_right = sensors.getUltras(BP)[2]  
 
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
@@ -304,6 +301,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             cur_front = sensors.getUltras(BP)[0]
             cur_left = sensors.getUltras(BP)[1]
             cur_right = sensors.getUltras(BP)[2]
+            ### TEST CURRENT IMPL VS BELOW
             # cur_front = act_dists[0]
             # cur_left = act_dists[1]
             # cur_right = act_dists[2] 

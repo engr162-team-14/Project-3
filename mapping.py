@@ -2,6 +2,7 @@ import brickpi3
 import grovepi 
 import math
 import time
+import csv
 
 import numpy as np
 from enum import Enum
@@ -37,6 +38,7 @@ class Map:
         self.hazard_info = [["Hazard Type","Parameter of Interest","Parameter Value","Hazard X Coordinate","Hazard Y Coordinate"]]
         self.cur_loc = origin
         self.cur_direc = direc
+        self.junc_instr = []
     @property
     def origin(self):
         return self.__origin
@@ -80,37 +82,82 @@ class Map:
     def cur_loc(self, cur_loc):
         self.__cur_loc = cur_loc
     @property
+    def cur_x(self):
+        return self.cur_loc[0]
+    @property
+    def cur_y(self):
+        return self.cur_loc[1]
+    @property
     def cur_direc(self):
         return self.__cur_direc
     @cur_direc.setter
     def cur_direc(self, cur_direc):
         self.__cur_direc = cur_direc
-    def appendRow(self):
+    @property
+    def junc_instr(self):
+        return self.__junc_instr
+    @junc_instr.setter
+    def junc_instr(self, junc_instr):
+        self.__junc_instr = junc_instr
+    def _appendRow(self):
         np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
-    def appendCol(self):
+    def _appendCol(self):
         for r in self.grid:
             np.append(r,State.UNKWN)
-    def addPoint(self,pt,point_type = State.EXPL):
+    def _addPoint(self,pt,point_type = State.EXPL):
+        if pt[0] < 0 or pt[1] < 0:
+            print("Error: Unable to add point with negative coordinates")
         if pt[0] > len(self.grid[0]):
-            self.appendCol()
-        elif pt[1] > len(self.grid):
-            self.appendRow()
+            self._appendCol()
+        if pt[1] > len(self.grid):
+            self._appendRow()
         self.grid[-pt[1] - 1][pt[0]] = point_type
     def updateLocation(self):
-        pass
-    def findNearestUnexp(self,):
-        pass
+        self._addPoint([self.cur_x,self.cur_y],State.EXPL)
+        if self.cur_direc == Dir.UP:
+            self._addPoint([self.cur_x,self.cur_y + 1],State.CUR)
+            self.cur_loc = [self.cur_x,self.cur_y + 1]
+        elif self.cur_direc == Dir.DOWN:
+            self._addPoint([self.cur_x,self.cur_y - 1],State.CUR)
+            self.cur_loc = [self.cur_x,self.cur_y - 1] 
+        elif self.cur_direc == Dir.LEFT:
+            self._addPoint([self.cur_x - 1,self.cur_y],State.CUR)
+            self.cur_loc = [self.cur_x - 1,self.cur_y]
+        elif self.cur_direc == Dir.RIGHT:
+            self._addPoint([self.cur_x + 1,self.cur_y],State.CUR)
+            self.cur_loc = [self.cur_x + 1,self.cur_y]
+        else:
+            print("Error: Direction uninitialized or non-real value")
+    def evalJunction(self):
+        if len(self.junc_instr) != 0:
+            return self.junc_instr.pop(0)
+        else:
+            return None
+    def findNearestUnexp(self):
+        return turn_instruc
     def _convertMap(self):
-        return None
+        for r in self.grid:
+            for c in self.grid:
+                self.grid[r][c] = (self.grid[r][c]).value
     def addHazard(self,haz_type,value,loc):
         hazard_dict = {
-            State.HEAT: [" "," "],
-            State.MAG: [" "," "]
+            State.HEAT: ["Fire","Temperature (C)"],
+            State.MAG: ["Damaged Power Station","Field Strenth (T)"]
         }
         new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
         self.hazard_info.append(new_hazard)
+        self._addPoint(loc,haz_type)
     def pushInfo(self,):
-        info = {"map": self._convertMap(),
+        self._convertMap()
+        info = {"map": self.grid,
                 "hazard table": self.hazard_info 
         }
+        with open('map.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(info["map"])
+
+        with open('hazards.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(info["hazard table"])    
+
         return info
