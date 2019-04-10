@@ -358,7 +358,7 @@ def cargoRelease(BP):
         ultraVals = getUltras(BP)
         if ultraVals[0] >= 40 and ultraVals[1] >= 40 and ultraVals[2] >= 40:
             print("I have arrived")
-            BP.set_motor_position(BP.PORT_A, 90)
+            BP.set_motor_position_relative(BP.PORT_A, 90)
         else:
             print("I have not arrived")
     except Exception as error:

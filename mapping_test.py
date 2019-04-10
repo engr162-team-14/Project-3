@@ -1,4 +1,4 @@
-import mapping
+from mapping import Map, Dir
 import sensors
 
 import time     
@@ -32,3 +32,10 @@ def calibrate(BP):
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
+
+    origin = input("Enter origin coordinates separted by space: ").split()
+    origin = [int(i) for i in origin]
+    map_num = input("Enter map number: ")
+
+
+    map = Map(origin,int(map_num),direc=Dir.UP)

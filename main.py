@@ -207,7 +207,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             if map_turn_ang != None:
                 turn_ang
 
-            speedControl(BP,imu_calib,speed,10)
+            speedControl(BP,imu_calib,speed,20)
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
             map.cur_direc += (turn_ang // 90)
@@ -220,7 +220,8 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
                 act_dists = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
                 dist_traveled += .1 * speed 
-            speedControl(BP,imu_calib,speed,5)
+
+            speedControl(BP,imu_calib,speed,15)
 
             if dist_traveled > 40:
                 map.pushInfo()
@@ -380,7 +381,6 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
     except KeyboardInterrupt:
         stop(BP)
 
-
 def navPointsInSeq(BP,imu_calib,speed,points,length_conv = 40):
     try:
         for x in range(len(points) - 1):
@@ -433,7 +433,7 @@ if __name__ == '__main__':
     imu_calib = calibrate(BP)
 
     # sensors.gyroTest(BP)
-    sensors.ultrasTest(BP)
+    # sensors.ultrasTest(BP)
     # sensors.imuMagTest()
     # sensors.irTest()
     # speedControl(BP,imu_calib,12,200)
