@@ -167,9 +167,9 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             turnPi(BP,cur_angle - sensors.gyroVal(BP))
 
             #check for junction cases
-            cur_front = sensors.getUltras(BP)[0]
-            cur_left = sensors.getUltras(BP)[1]
-            cur_right = sensors.getUltras(BP)[2]  
+            cur_front = act_dists[0]
+            cur_left = act_dists[1]
+            cur_right = act_dists[2] 
 
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
@@ -207,7 +207,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             if map_turn_ang != None:
                 turn_ang
 
-            speedControl(BP,imu_calib,speed,20)
+            speedControl(BP,imu_calib,speed,10 + 8)
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
             map.cur_direc += (turn_ang // 90)
@@ -221,7 +221,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
                 time.sleep(.1)
                 dist_traveled += .1 * speed 
 
-            speedControl(BP,imu_calib,speed,15)
+            speedControl(BP,imu_calib,speed,5 + 8)
 
             if dist_traveled > 40:
                 map.pushInfo()
@@ -322,13 +322,13 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             turnPi(BP,cur_angle - sensors.gyroVal(BP))
 
             #check for junction cases
-            cur_front = sensors.getUltras(BP)[0]
-            cur_left = sensors.getUltras(BP)[1]
-            cur_right = sensors.getUltras(BP)[2]
-            ### TEST CURRENT IMPL VS BELOW
-            # cur_front = act_dists[0]
-            # cur_left = act_dists[1]
-            # cur_right = act_dists[2] 
+            # cur_front = sensors.getUltras(BP)[0]
+            # cur_left = sensors.getUltras(BP)[1]
+            # cur_right = sensors.getUltras(BP)[2]
+            ### TEST CURRENT IMPL VS ABOVE
+            cur_front = act_dists[0]
+            cur_left = act_dists[1]
+            cur_right = act_dists[2] 
 
             #dead end
             if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
@@ -362,7 +362,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
                 turn_ang = 0
                 print("Well, sheit...problems...")
 
-            speedControl(BP,imu_calib,speed,10)
+            speedControl(BP,imu_calib,speed,10 + 10)
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
 
@@ -372,7 +372,7 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
                 setSpeed(BP,speed,speed)
                 act_dists = np.multiply(sensors.getUltras(BP), cos(radians(sensors.gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
-            speedControl(BP,imu_calib,speed,5)
+            speedControl(BP,imu_calib,speed,5 + 8)
 
             setSpeed(BP,0,0)
            

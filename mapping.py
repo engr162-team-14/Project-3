@@ -100,18 +100,18 @@ class Map:
     def junc_instr(self, junc_instr):
         self.__junc_instr = junc_instr
     def _appendRow(self):
-        np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
+        self.grid = np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
     def _appendCol(self):
-        for r in self.grid:
-            np.append(r,State.UNKWN)
+        for x in range(len(self.grid)):
+            self.grid[x] = np.append(self.grid[x],State.UNKWN)
     def _addPoint(self,pt,point_type = State.EXPL):
         if pt[0] < 0 or pt[1] < 0:
             print("Error: Unable to add point with negative coordinates")
-        if pt[0] > len(self.grid[0]):
+        if pt[0] > len(self.grid[0]) - 1:
             self._appendCol()
-        if pt[1] > len(self.grid):
+        if pt[1] > len(self.grid) - 1:
             self._appendRow()
-        self.grid[-pt[1] - 1][pt[0]] = point_type
+        self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
     def updateLocation(self):
         self._addPoint([self.cur_x,self.cur_y],State.EXPL)
         if self.cur_direc == Dir.UP:
