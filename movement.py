@@ -358,9 +358,15 @@ def cargoRelease(BP):
         ultraVals = getUltras(BP)
         if ultraVals[0] >= 40 and ultraVals[1] >= 40 and ultraVals[2] >= 40:
             print("I have arrived")
-            BP.set_motor_position_relative(BP.PORT_A, 90)
+            val = BP.get_motor_encoder(BP.PORT_A)
+            theta = val + 2300
+            BP.set_motor_position(BP.PORT_A, theta)
+            time.sleep(1.5)
+            speedControl(BP,imu_calib,5,10)
+            BP.set_motor_position(BP.PORT_A, val)
         else:
             print("I have not arrived")
+            print(ultraVals)
     except Exception as error:
         print("cargoRelease: ", error)
     except KeyboardInterrupt:
