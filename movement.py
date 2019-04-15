@@ -353,7 +353,7 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 40, haz_mode = Haza
     except KeyboardInterrupt:
         stop(BP)  
 
-def cargoRelease(BP):
+def cargoRelease(BP, imu_calib):
     try:
         ultraVals = getUltras(BP)
         if ultraVals[0] >= 40 and ultraVals[1] >= 40 and ultraVals[2] >= 40:
