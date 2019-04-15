@@ -21,7 +21,7 @@ from sensors import imuMagTest
 from sensors import irCalib
 from sensors import irTest
 from sensors import irVal
-from sensors import imuMag
+from sensors import hazardCheck
 
 class Sensor(Enum):
     FRONT = 0
@@ -372,12 +372,16 @@ def cargoRelease(BP, imu_calib):
     except KeyboardInterrupt:
         stop(BP)
 
-def hazard_dist(imu_calib, mode, x, y):
+
+################ PLEASE MOVE THIS TO SENSORS -- TALK TO ME ASAP IF POSSIBLE ########################
+def hazardDist(imu_calib, mode, x, y):
     try:
         if mode == 1:
             print('Ima workin on this')
         if mode == 2:
             print('Ima workin on this')
+    except Exception as error:
+        print("hazardDist: ", error)
             
 def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
     try:
@@ -399,7 +403,7 @@ def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
                 haz_mag_val = imuMag()
                 haz = 2
                 #Between 0 and 5 cm
-                if haz_mag_val[0] >= 0 and haz_mag_val[0] =< magx_thresh:
+                if haz_mag_val[0] >= 0 and haz_mag_val[0] <= magx_thresh:
                     mode = 2
                 #Between -5 and 0 cm
                 elif haz_mag_val[0] >= -1 * magx_thresh and haz_mag_val[0] < 0:
@@ -410,6 +414,8 @@ def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
                 #Between -10 and -5 cm
                 elif haz_mag_val[0] < magx_thresh:
                     mode = 5
-            
+        return haz
+    except Exception as error:
+        print("hazardCheck: ", error) 
 
-    return haz
+#################################################################################################

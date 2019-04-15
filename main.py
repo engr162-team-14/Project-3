@@ -15,6 +15,7 @@ from movement import parallelToWallDuo
 from movement import pt_2_pt
 from movement import cargoRelease
 from movement import stop
+from movement import Sensor
 
 from sensors import gyroCalib
 from sensors import gyroVal
