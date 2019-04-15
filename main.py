@@ -6,7 +6,6 @@ import numpy as np
 from enum import Enum
 from math import cos, radians, log, pi
 
-from movement import Sensor
 from movement import Hazard
 from movement import setSpeed
 from movement import turnPi

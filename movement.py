@@ -377,6 +377,7 @@ def hazard_dist(imu_calib, mode, x, y):
         if mode == 1:
             print('Ima workin on this')
         if mode == 2:
+            print('Ima workin on this')
             
 def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
     try:
