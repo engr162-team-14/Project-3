@@ -5,14 +5,15 @@ import matplotlib.pyplot as plt
 file = open("DC3_Data.csv", "r")
 data = csv.reader(file)
 
-img = []
+pixel_data = []
 
 for row in data:
-    img.append(float(row[0]))
+    pixel_data.append(float(row[0]))
     
-i = np.reshape(img, (25,25))
-data1 = np.array(i, dtype=float)
+image = np.reshape(pixel_data, (25,25))
+image = np.array(image, dtype=float)
+
 plt.figure(1)
 plt.gray()
-plt.imshow(data1)
+plt.imshow(image)
 plt.show()
