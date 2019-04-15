@@ -56,7 +56,7 @@ def gyroTest(BP):
 
 def leftUltraCalib(BP):
     try:
-        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 1 to Gyro
+        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)
         print("calibrating left ultrasonic sensor..")
         while True:
             try:
@@ -267,8 +267,53 @@ def irVal(pin1 = 14, pin2 = 15):
     except Exception as error: 
         print("irVal:",error)
 
-def hazardCheck(imu_calib, any_other_vars_you_need):
-    '''hazardCheck returns a boolean value based on if there is a hazard in front of robot that needs to be measured and avoided'''
-    #ISAAC WRITE YOUR HAZARD CHECK STUFF HERE
 
-    return False
+########### WE ACTUALLY DONT NEED THIS ###############
+def hazardDist(imu_calib, mode, x, y):
+    try:
+        if mode == 1:
+            print('Ima workin on this')
+        if mode == 2:
+            print('Ima workin on this')
+    except Exception as error:
+        print("hazardDist: ", error)
+#########################################################
+            
+def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115):
+    '''
+    Description: Checks for hazards directly in front of robot given sensor thresholds \n 
+    Return value: hazardCheck returns [is_hazard, hazard_val] \n
+               is_hazard -- boolean that signifies if there is a hazard within ~10cm
+               hazard_val -- measured relative strength of hazard detected (None if is_hazard is false)
+    '''
+    try:
+        haz = 0
+        mode = 0
+        while True:
+            ir_val = irVal()
+            mag_val = imuMagFiltered(imu_calib)
+            if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
+                time.sleep(.5)
+                haz_ir_val = irVal()
+                haz = 1
+
+                mode = 1
+            if mag_val[1] >= magy_thresh:
+                time.sleep(.5)
+                haz_mag_val = imuMagFiltered(imu_calib)
+                haz = 2
+                #Between 0 and 5 cm
+                if haz_mag_val[0] >= 0 and haz_mag_val[0] <= magx_thresh:
+                    mode = 2
+                #Between -5 and 0 cm
+                elif haz_mag_val[0] >= -1 * magx_thresh and haz_mag_val[0] < 0:
+                    mode = 3
+                #Between 5 and 10 cm
+                elif haz_mag_val[0] > magx_thresh:
+                    mode = 4
+                #Between -10 and -5 cm
+                elif haz_mag_val[0] < magx_thresh:
+                    mode = 5
+        return haz
+    except Exception as error:
+        print("hazardCheck: ", error) 

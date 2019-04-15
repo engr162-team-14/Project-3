@@ -34,16 +34,22 @@ class Hazard(Enum):
 
 def stop(BP):
     BP.set_motor_dps(BP.PORT_B, 0)
-    BP.set_motor_dps(BP.PORT_C, 0)   
+    BP.set_motor_dps(BP.PORT_C, 0) 
+    BP.set_motor_dps(BP.PORT_A, 0)  
     BP.offset_motor_encoder(BP.PORT_B, BP.get_motor_encoder(BP.PORT_B))
     BP.offset_motor_encoder(BP.PORT_C, BP.get_motor_encoder(BP.PORT_C))
+    BP.offset_motor_encoder(BP.PORT_A, BP.get_motor_encoder(BP.PORT_D))
 
-    BP.offset_motor_encoder(BP.PORT_D, BP.get_motor_encoder(BP.PORT_D))
     BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)
+    BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)
                
     print("stopped")
 
 def setSpeed(BP,speed_l,speed_r,drc = 0):
+    '''
+    Description: Sets left and right motor speeds to speed_l and speed_r respectively, in cm/s \n 
+    Return value: void
+    '''
     try:
         #print(speed_l," ",speed_r)
         d = 6.85
@@ -111,7 +117,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             start_time = time.time()
 
             #if looking for hazards and there is 
-            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib, None):
+            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
                 setSpeed(BP,0,0)
                 return pos
 
@@ -368,52 +374,3 @@ def cargoRelease(BP, imu_calib):
         print("cargoRelease: ", error)
     except KeyboardInterrupt:
         stop(BP)
-
-
-################ PLEASE MOVE THIS TO SENSORS -- TALK TO ME ASAP IF POSSIBLE ########################
-'''
-def hazardDist(imu_calib, mode, x, y):
-    try:
-        if mode == 1:
-            print('Ima workin on this')
-        if mode == 2:
-            print('Ima workin on this')
-    except Exception as error:
-        print("hazardDist: ", error)
-            
-def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
-    try:
-        haz = 0
-        mode = 0
-        while True:
-            ir_val = irVal()
-            mag_val = imuMag()
-            if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
-                setSpeed(BP,0,0)
-                time.sleep(.5)
-                haz_ir_val = irVal()
-                haz = 1
-
-                mode = 1
-            if mag_val[1] >= magy_thresh:
-                setSpeed(BP, 0, 0)
-                time.sleep(.5)
-                haz_mag_val = imuMag()
-                haz = 2
-                #Between 0 and 5 cm
-                if haz_mag_val[0] >= 0 and haz_mag_val[0] <= magx_thresh:
-                    mode = 2
-                #Between -5 and 0 cm
-                elif haz_mag_val[0] >= -1 * magx_thresh and haz_mag_val[0] < 0:
-                    mode = 3
-                #Between 5 and 10 cm
-                elif haz_mag_val[0] > magx_thresh:
-                    mode = 4
-                #Between -10 and -5 cm
-                elif haz_mag_val[0] < magx_thresh:
-                    mode = 5
-        return haz
-    except Exception as error:
-        print("hazardCheck: ", error) 
-'''
-#################################################################################################

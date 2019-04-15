@@ -146,7 +146,7 @@ class Map:
 
     def evalJunction(self):
         #evaluate squares around to see if there are unexplored
-        if self.cur_loc...
+        # if self.cur_loc...
 
         #return degrees to turn based on which one choosed
         

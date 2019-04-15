@@ -319,10 +319,6 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
             turnPi(BP,cur_angle - gyroVal(BP))
 
             #check for junction cases
-            # cur_front = getUltras(BP)[0]
-            # cur_left = getUltras(BP)[1]
-            # cur_right = getUltras(BP)[2]
-            ### TEST CURRENT IMPL VS ABOVE
             cur_front = act_dists[0]
             cur_left = act_dists[1]
             cur_right = act_dists[2] 
@@ -371,8 +367,6 @@ def mazeNav(BP,imu_calib,speed,set_dists,kp = .4,ki = .02,bfr_dist = 25,sensor =
                 time.sleep(.1)
             speedControl(BP,imu_calib,speed,5 + 8)
 
-            setSpeed(BP,0,0)
-           
     except Exception as error: 
         print("mazeNav:",error)
     except KeyboardInterrupt:
@@ -418,7 +412,6 @@ def pocTasks(BP,imu_calib,task_num):
         pts = [(0,0),(0,2),(2,2),(2,3),(0,3),(2,3),(2,2),(4,2),(4,3),(0,4),(0,0)]
         navPointsInSeq(BP,imu_calib,15,pts)
     
-
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
