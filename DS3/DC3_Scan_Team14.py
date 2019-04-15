@@ -17,7 +17,6 @@ from sensors import lightTest
 from sensors import lightVal
 from sensors import imuCalib
 
-
 def calibrate():
     lightCalib()
     calib = imuCalib()
@@ -35,7 +34,7 @@ def calibrate():
     return imu_calib
 
 def scanArea(BP,speed,imu_calib):
-    img_data = np.full((25,25),10)
+    img_data = np.zeros((25,25))
 
     for r in range(25):
         if r % 2 == 0:
