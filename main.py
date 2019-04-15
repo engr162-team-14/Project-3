@@ -35,30 +35,6 @@ from sensors import hazardCheck
 
 from mapping import Map
 from mapping import Dir
-
-class Calibration:
-    def __init__(self,BP,imu_calib,gyro):
-        self.BP = BP
-        self.imu = imu_calib
-        self.gyro = gyro
-    @property
-    def BP(self):
-        return self.__BP
-    @BP.setter
-    def BP(self,BP):
-        self.__BP = BP
-    @property
-    def imu(self):
-        return self.__imu
-    @imu.setter
-    def imu(self,imu):
-        self.__imu = imu
-    @property
-    def gyro(self):
-        return self.__gyro
-    @gyro.setter
-    def gyro(self,gyro):
-        self.__gyro = gyro
     
 def calibrate(BP):
     gyroCalib(BP)
@@ -103,15 +79,19 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             cur_angle += delt_ang1
             
             print("sonar PID init")
-            # get inital encoder value
+            BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
+            BP.offset_motor_encoder(BP.PORT_B,BP.get_motor_encoder(BP.PORT_B))
             while act_dists[0] > set_dists[0] and act_dists[1] < set_dists[1] + bfr_dist and act_dists[2] < set_dists[2] + bfr_dist:
                 errors = np.subtract(set_dists, act_dists)
 
                 #if encoder value says weve traveled 40 cm --> reset initial encoder value and update current location
+                if (BP.get_motor_encoder(BP.PORT_C) + BP.get_motor_encoder(BP.PORT_C)) / 2 > (40 * (360/(7* pi))):
+                    BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
+                    BP.offset_motor_encoder(BP.PORT_B,BP.get_motor_encoder(BP.PORT_B))
+                    map.updateLocation()
 
                 if abs(errors[1]) <= dead_band_dist:
                     print("inside dead band")
-
                     dead_band_dist = 4
 
                     # integral windup reset
@@ -133,8 +113,12 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
                     while abs(act_dists[1] - set_dists[1]) < dead_band_dist and act_dists[0] > set_dists[0] and act_dists[2] < set_dists[2] + bfr_dist:
 
                         #if encoder value says weve traveled 40 cm --> reset initial encoder value and update current location
+                        if (BP.get_motor_encoder(BP.PORT_C) + BP.get_motor_encoder(BP.PORT_C)) / 2 > (40 * (360/(7* pi))):
+                            BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
+                            BP.offset_motor_encoder(BP.PORT_B,BP.get_motor_encoder(BP.PORT_B))
+                            map.updateLocation()
 
-                        gyro_error = cur_angle - gyroVal(BP)                         #error = system (gyro) dev from desired state (target_deg)
+                        gyro_error = cur_angle - gyroVal(BP)                                #error = system (gyro) dev from desired state (target_deg)
                         gyro_integ = gyro_integ + (gyro_dt * (gyro_error + gyro_error_p)/2)  #integral feedback (trapez approx)
                         gyro_output = gyro_kp * (gyro_error) + gyro_ki * (gyro_integ)        #PI feedback response
                         gyro_error_p = gyro_error
@@ -173,8 +157,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
                 time.sleep(.05)
             
             setSpeed(BP,0,0)
-            print("junction case reached")
-            print("front: %d | left: %d | right: %d" % (act_dists[0],act_dists[1],act_dists[2]))
+            print("junction case reached\nfront: %d | left: %d | right: %d" % (act_dists[0],act_dists[1],act_dists[2]))
             turnPi(BP,cur_angle - gyroVal(BP))
 
             #check for junction cases
@@ -182,69 +165,66 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             cur_left = act_dists[1]
             cur_right = act_dists[2] 
 
-            #dead end
-            if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = 180
-                print("dead end")
-            #left option only
-            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = -90
-                print("left option only")
-            #right option only
-            elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right option only")
-            else:
-                # get turn angle based on intersection evaluation
-                turn_ang = 2
-
-                #use default values if mapping intersection eval fails
-                if turn_ang == -1:
-                    #right and left options
-                    if cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                        turn_ang = 90
-                        print("right and left options")
-                    #left and forward
-                    elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                        turn_ang = -90
-                        print("left and forward options")
-                    #right and forward
-                    elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                        turn_ang = 90
-                        print("right and forward options")
-                    #4 way intersection
-                    elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                        turn_ang = 90
-                        print("4 way intersection")
-                    else:
-                        turn_ang = 0
-                        print("Well, sheit...problems...")
-
+            # Check for case where some paths have been explored
             map_turn_ang = map.evalJunction()
             if map_turn_ang != None:
-                turn_ang
+                turn_ang = map_turn_ang
+            # If new junction (no previously explore paths taken), take default path based on junction type
+            else:
+                #dead end
+                if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = 180
+                    print("dead end")
+                #left option only
+                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = -90
+                    print("left option only")
+                #right option only
+                elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right option only")
+                #right and left options
+                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right and left options")
+                #left and forward
+                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = 0
+                    print("left and forward options")
+                #right and forward
+                elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right and forward options")
+                #4 way intersection
+                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("4 way intersection")
+                else:
+                    turn_ang = 0
+                    print("Well, sheit...problems...")
 
-            speedControl(BP,imu_calib,speed,10 + 8)
+            # travel extra distance to ensure robot is in center of junction
+            speedControl(BP,imu_calib,speed,10)
+
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
-            map.cur_direc += (turn_ang // 90)
+            map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
 
-            #drive forward until walls on each side and path ahead (normal)
+            # drive forward until exit junction (walls on each side and open ahead)
             act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
-            dist_traveled = 0
-            while act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist or dist_traveled > 40:
+            BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
+            while act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist or BP.get_motor_encoder(BP.PORT_C) < (50 * (360/(7* pi))):
                 setSpeed(BP,speed,speed)
                 act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
-                dist_traveled += .1 * speed 
 
-            speedControl(BP,imu_calib,speed,5 + 8)
-
-            if dist_traveled > 40:
+            # out of maze if traveled more than 50 cm to exit junction
+            if BP.get_motor_encoder(BP.PORT_C) > (50 * (360/(7* pi))):
                 map.pushInfo()
                 break
 
-            setSpeed(BP,0,0)
+            # travel extra distance to ensure robot is between walls prior to sweep
+            speedControl(BP,imu_calib,speed,5)
            
     except Exception as error: 
         print("mazeMap:",error)
@@ -449,6 +429,7 @@ if __name__ == '__main__':
     # imuMagTest()
     # irTest()
     # speedControl(BP,imu_calib,12,200)
+    ##############################
 
     set_dists = [35,11,11]
 

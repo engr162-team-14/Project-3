@@ -38,72 +38,86 @@ class Map:
         self.hazard_info = [["Hazard Type","Parameter of Interest","Parameter Value","Hazard X Coordinate","Hazard Y Coordinate"]]
         self.cur_loc = origin
         self.cur_direc = direc
-        self.junc_instr = []
+
     @property
     def origin(self):
         return self.__origin
+
     @origin.setter
     def origin(self, origin):
         self.__origin = origin
+
     @property
     def grid(self):
         return self.__grid
+
     @grid.setter
     def grid(self, grid):
         self.__grid = grid
+
     @property
     def map_num(self):
         return self.__map_num
+
     @map_num.setter
     def map_num(self, map_num):
         self.__map_num = map_num
+
     @property
     def team(self):
         return self.__team
+
     @team.setter
     def team(self, team):
         self.__team = team
+
     @property
     def unit(self):
         return self.__unit
+
     @unit.setter
     def unit(self, unit):
         self.__unit = unit
+
     @property
     def hazard_info(self):
         return self.__hazard_info
+
     @hazard_info.setter
     def hazard_info(self, hazard_info):
         self.__hazard_info = hazard_info
+
     @property
     def cur_loc(self):
         return self.__cur_loc
+
     @cur_loc.setter
     def cur_loc(self, cur_loc):
         self.__cur_loc = cur_loc
+
     @property
     def cur_x(self):
         return self.cur_loc[0]
+
     @property
     def cur_y(self):
         return self.cur_loc[1]
+
     @property
     def cur_direc(self):
         return self.__cur_direc
+
     @cur_direc.setter
     def cur_direc(self, cur_direc):
         self.__cur_direc = cur_direc
-    @property
-    def junc_instr(self):
-        return self.__junc_instr
-    @junc_instr.setter
-    def junc_instr(self, junc_instr):
-        self.__junc_instr = junc_instr
+
     def _appendRow(self):
         self.grid = np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
+
     def _appendCol(self):
         for x in range(len(self.grid)):
             self.grid[x] = np.append(self.grid[x],State.UNKWN)
+
     def _addPoint(self,pt,point_type = State.EXPL):
         if pt[0] < 0 or pt[1] < 0:
             print("Error: Unable to add point with negative coordinates")
@@ -112,6 +126,7 @@ class Map:
         if pt[1] > len(self.grid) - 1:
             self._appendRow()
         self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
+
     def updateLocation(self):
         self._addPoint([self.cur_x,self.cur_y],State.EXPL)
         if self.cur_direc == Dir.UP:
@@ -128,17 +143,20 @@ class Map:
             self.cur_loc = [self.cur_x + 1,self.cur_y]
         else:
             print("Error: Direction uninitialized or non-real value")
+
     def evalJunction(self):
-        if len(self.junc_instr) > 0:
-            return self.junc_instr.pop(0)
-        else:
-            return None
-    def findNearestUnexp(self):
+        #evaluate squares around to see if there are unexplored
+        if self.cur_loc...
+
+        #return degrees to turn based on which one choosed
+        
         return None
+
     def _convertMap(self):
         for r in self.grid:
             for c in self.grid:
                 self.grid[r][c] = (self.grid[r][c]).value
+
     def addHazard(self,haz_type,value,loc):
         hazard_dict = {
             State.HEAT: ["Fire","Temperature (C)"],
@@ -147,6 +165,7 @@ class Map:
         new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
         self.hazard_info.append(new_hazard)
         self._addPoint(loc,haz_type)
+
     def pushInfo(self):
         self._convertMap()
         info = {"map": self.grid,

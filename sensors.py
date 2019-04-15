@@ -267,7 +267,8 @@ def irVal(pin1 = 14, pin2 = 15):
     except Exception as error: 
         print("irVal:",error)
 
-def hazardCheck(imu_calib, ir_thresh = 30,mag_thresh = 30):
-    #imuMagFiltered(imu_calib) >= mag_thresh and irVal() >= ir_thresh
+def hazardCheck(imu_calib, any_other_vars_you_need):
+    '''hazardCheck returns a boolean value based on if there is a hazard in front of robot that needs to be measured and avoided'''
+    #ISAAC WRITE YOUR HAZARD CHECK STUFF HERE
 
     return False

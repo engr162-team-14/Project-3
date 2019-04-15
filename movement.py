@@ -111,7 +111,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             start_time = time.time()
 
             #if looking for hazards and there is 
-            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib, None):
                 setSpeed(BP,0,0)
                 return pos
 
@@ -126,9 +126,6 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             pos += abs(speed) * (time.time() - start_time)
 
         setSpeed(BP,0,0)
-        # ***delete later vvvvvvvvvvvv***
-        if haz_mode == Hazard.CHECK_HAZARDS:
-            return pos
     except Exception as error: 
         print("speedControl:",error)
     except KeyboardInterrupt:
@@ -374,6 +371,7 @@ def cargoRelease(BP, imu_calib):
 
 
 ################ PLEASE MOVE THIS TO SENSORS -- TALK TO ME ASAP IF POSSIBLE ########################
+'''
 def hazardDist(imu_calib, mode, x, y):
     try:
         if mode == 1:
@@ -417,5 +415,5 @@ def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
         return haz
     except Exception as error:
         print("hazardCheck: ", error) 
-
+'''
 #################################################################################################
