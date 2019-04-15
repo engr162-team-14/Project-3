@@ -44,6 +44,15 @@ def scanArea(BP,speed,imu_calib):
         else:
             img_data[r] = pt2PtScan(BP,speed,(25,r),(0,r),imu_calib)
             pt2Pt(BP,speed,(0,r),(0,r + 1),imu_calib)
+    
+    max_value = -1
+    for r in range(25):
+        if max(img_data[r]) > max_value:
+            max_value = max(img_data[r])
+
+    for r in range(25):
+        for c in range(25):
+            img_data[r][c] = img_data[r][c] / max_value
 
     print("Scan complete")
     return img_data
