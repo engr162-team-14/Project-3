@@ -452,6 +452,5 @@ if __name__ == '__main__':
 
     set_dists = [35,11,11]
 
-
-    mazeNav(BP, imu_calib, 10, set_dists, direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
+    mazeMap(BP, imu_calib, 10, set_dists, direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
     cargoRelease(BP, imu_calib)
