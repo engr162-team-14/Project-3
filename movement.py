@@ -21,7 +21,7 @@ from sensors import imuMagTest
 from sensors import irCalib
 from sensors import irTest
 from sensors import irVal
-from sensors import hazardCheck
+from sensors import imuMag
 
 class Sensor(Enum):
     FRONT = 0
@@ -362,7 +362,7 @@ def cargoRelease(BP, imu_calib):
             theta = val + 2300
             BP.set_motor_position(BP.PORT_A, theta)
             time.sleep(1.5)
-            speedControl(BP,imu_calib,5,10)
+            speedControl(BP, imu_calib ,5,10)
             BP.set_motor_position(BP.PORT_A, val)
         else:
             print("I have not arrived")
@@ -371,3 +371,44 @@ def cargoRelease(BP, imu_calib):
         print("cargoRelease: ", error)
     except KeyboardInterrupt:
         stop(BP)
+
+def hazard_dist(imu_calib, mode, x, y):
+    try:
+        if mode == 1:
+            print('Ima workin on this')
+        if mode == 2:
+            
+def hazardCheck(imu_calib, ir_thresh = 130,magx_thresh = 30, magy_thresh = 115):
+    try:
+        haz = 0
+        mode = 0
+        while True:
+            ir_val = irVal()
+            mag_val = imuMag()
+            if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
+                setSpeed(BP,0,0)
+                time.sleep(.5)
+                haz_ir_val = irVal()
+                haz = 1
+
+                mode = 1
+            if mag_val[1] >= magy_thresh:
+                setSpeed(BP, 0, 0)
+                time.sleep(.5)
+                haz_mag_val = imuMag()
+                haz = 2
+                #Between 0 and 5 cm
+                if haz_mag_val[0] >= 0 and haz_mag_val[0] =< magx_thresh:
+                    mode = 2
+                #Between -5 and 0 cm
+                elif haz_mag_val[0] >= -1 * magx_thresh and haz_mag_val[0] < 0:
+                    mode = 3
+                #Between 5 and 10 cm
+                elif haz_mag_val[0] > magx_thresh:
+                    mode = 4
+                #Between -10 and -5 cm
+                elif haz_mag_val[0] < magx_thresh:
+                    mode = 5
+            
+
+    return haz
