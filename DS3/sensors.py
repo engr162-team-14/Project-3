@@ -137,4 +137,3 @@ def imuGyroTest():
 
     except Exception as error: 
         print("imuGyroTest:",error)
-
