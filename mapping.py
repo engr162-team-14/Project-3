@@ -118,7 +118,7 @@ class Map:
         for x in range(len(self.grid)):
             self.grid[x] = np.append(self.grid[x],State.UNKWN)
 
-    def _addPoint(self,pt,point_type = State.EXPL):
+    def _setPoint(self,pt,point_type = State.EXPL):
         if pt[0] < 0 or pt[1] < 0:
             print("Error: Unable to add point with negative coordinates")
         if pt[0] > len(self.grid[0]) - 1:
@@ -127,30 +127,43 @@ class Map:
             self._appendRow()
         self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
 
+    def _getPoint(self,pt):
+        return self.grid[len(self.grid) - pt[1] - 1][pt[0]]
+
     def updateLocation(self):
-        self._addPoint([self.cur_x,self.cur_y],State.EXPL)
+        self._setPoint([self.cur_x,self.cur_y],State.EXPL)
         if self.cur_direc == Dir.UP:
-            self._addPoint([self.cur_x,self.cur_y + 1],State.CUR)
+            self._setPoint([self.cur_x,self.cur_y + 1],State.CUR)
             self.cur_loc = [self.cur_x,self.cur_y + 1]
         elif self.cur_direc == Dir.DOWN:
-            self._addPoint([self.cur_x,self.cur_y - 1],State.CUR)
+            self._setPoint([self.cur_x,self.cur_y - 1],State.CUR)
             self.cur_loc = [self.cur_x,self.cur_y - 1] 
         elif self.cur_direc == Dir.LEFT:
-            self._addPoint([self.cur_x - 1,self.cur_y],State.CUR)
+            self._setPoint([self.cur_x - 1,self.cur_y],State.CUR)
             self.cur_loc = [self.cur_x - 1,self.cur_y]
         elif self.cur_direc == Dir.RIGHT:
-            self._addPoint([self.cur_x + 1,self.cur_y],State.CUR)
+            self._setPoint([self.cur_x + 1,self.cur_y],State.CUR)
             self.cur_loc = [self.cur_x + 1,self.cur_y]
         else:
             print("Error: Direction uninitialized or non-real value")
 
-    def evalJunction(self):
-        #evaluate squares around to see if there are unexplored
-        # if self.cur_loc...
+    def evalJunction(self,has_front_path,has_left_path,has_right_path):
+        turn_ang = None
 
-        #return degrees to turn based on which one choosed
-        
-        return None
+        # Approaching new junction (edge of matrix)
+        if self.cur_x == len(self.grid[0]) or self.cur_y == 0:
+            pass
+
+        # Approaching new junction (within matrix)
+        elif self._getPoint((self.cur_x + 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y + 1)) != State.UNEXPL \
+            and self._getPoint((self.cur_x - 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y - 1)) != State.UNEXPL: 
+            pass
+
+        # Approaching pre-existing junction
+        else:
+            pass
+
+        return turn_ang
 
     def _convertMap(self):
         for r in self.grid:
@@ -164,7 +177,7 @@ class Map:
         }
         new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
         self.hazard_info.append(new_hazard)
-        self._addPoint(loc,haz_type)
+        self._setPoint(loc,haz_type)
 
     def pushInfo(self):
         self._convertMap()

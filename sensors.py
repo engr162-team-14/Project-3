@@ -11,6 +11,8 @@ from IMUFilters import FindSTD
 from IMUFilters import InvGaussFilter
 from MPU9250 import MPU9250
 
+from mapping import State
+
 
 def gyroCalib(BP):
     try:
@@ -277,14 +279,15 @@ def hazardDist(imu_calib, mode, x, y):
             print('Ima workin on this')
     except Exception as error:
         print("hazardDist: ", error)
-#########################################################
+########################################################
             
 def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115):
     '''
     Description: Checks for hazards directly in front of robot given sensor thresholds \n 
-    Return value: hazardCheck returns [is_hazard, hazard_val] \n
-               is_hazard -- boolean that signifies if there is a hazard within ~10cm
-               hazard_val -- measured relative strength of hazard detected (None if is_hazard is false)
+    Return value: hazardCheck returns [ hazard_type, hazard_val ] \n
+               hazard_type -- State Enum that signifies hazard type (State.HEAT, State.Mag,
+                                or None if there is no hazard within ~40cm)
+               hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
     '''
     try:
         haz = 0

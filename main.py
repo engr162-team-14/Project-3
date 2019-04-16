@@ -55,7 +55,7 @@ def calibrate(BP):
 
     return imu_calib
 
-def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dist = 25,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
+def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dist = 25,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         origin = input("Enter origin coordinates separted by space: ").split()
@@ -66,7 +66,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
         errors = [-1,1,1]
         errors_p = [0,0,0]
         integs = [0,0,0]
-        dt = .2            #loop iteration ~= .15 + .05 sleep
+        dt = .2                   #loop iteration ~= .15 + .05 sleep
         cur_angle = gyroVal(BP)
         act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
         
@@ -166,11 +166,10 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .02,bfr_dis
             cur_right = act_dists[2] 
 
             # Check for case where some paths have been explored
-            map_turn_ang = map.evalJunction()
-            if map_turn_ang != None:
-                turn_ang = map_turn_ang
+            turn_ang = map.evalJunction(cur_front // set_dists[0], cur_left // set_dists[1], cur_right // set_dists[2])
+
             # If new junction (no previously explore paths taken), take default path based on junction type
-            else:
+            if turn_ang == None:
                 #dead end
                 if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                     turn_ang = 180
