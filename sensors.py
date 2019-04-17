@@ -291,8 +291,6 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
                hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
     '''
     try:
-        
-        mode = 0 
         while True:
             ir_val = irVal()
             mag_val = imuMagFiltered(imu_calib)

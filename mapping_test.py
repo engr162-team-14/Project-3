@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from mapping import Map, Dir, State
 import sensors
 
@@ -26,7 +28,7 @@ def calibrate(BP):
 
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
-    imu_calib = calibrate(BP)
+    # imu_calib = calibrate(BP)
 
     origin = input("Enter origin coordinates separted by space: ").split()
     origin = [int(i) for i in origin]
@@ -38,5 +40,7 @@ if __name__ == '__main__':
     map._setPoint((1,1),State.EXPL)
     print(map.grid)
     map._setPoint((2,1),State.EXPL)
+    print(map.grid)
+    map._setPoint((2,2),State.EXPL)
     print(map.grid)
     map.pushInfo()

@@ -45,7 +45,7 @@ def stop(BP):
                
     print("stopped")
 
-def setSpeed(BP,speed_l,speed_r,drc = 0):
+def setSpeed(BP,speed_l,speed_r,drc = -1):
     '''
     Description: Sets left and right motor speeds to speed_l and speed_r respectively, in cm/s \n 
     Return value: void

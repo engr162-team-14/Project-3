@@ -105,8 +105,8 @@ class Map:
         self.grid = np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
 
     def _appendCol(self):
-        for x in range(len(self.grid)):
-            self.grid[x] = np.append(self.grid[x],State.UNKWN)
+        insert = np.full((len(self.grid),1), State.UNKWN)
+        self.grid = np.append(self.grid, insert, axis=1)
 
     def _setPoint(self,pt,point_type = State.EXPL):
         if pt[0] < 0 or pt[1] < 0:
@@ -172,8 +172,8 @@ class Map:
         self.cur_loc = new_cur
 
     def _convertMap(self):
-        for r in self.grid:
-            for c in self.grid:
+        for r in range(len(self.grid)):
+            for c in range(len(self.grid[r])):
                 self.grid[r][c] = (self.grid[r][c]).value
 
     def addHazard(self,hazard_type,value):
