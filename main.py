@@ -35,6 +35,7 @@ from sensors import hazardCheck
 
 from mapping import Map
 from mapping import Dir
+from mapping import State
     
 def calibrate(BP):
     gyroCalib(BP)
@@ -165,46 +166,67 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
             cur_left = act_dists[1]
             cur_right = act_dists[2] 
 
-            # Take path based on junction type
-            #dead end
-            if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = 180
-                print("dead end")
-            #left option only
-            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = -90
-                print("left option only")
-            #right option only
-            elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right option only")
-            #right and left options
-            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right and left options")
-            #left and forward
-            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = 0
-                print("left and forward options")
-            #right and forward
-            elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right and forward options")
-            #4 way intersection
-            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("4 way intersection")
-            else:
-                turn_ang = 0
-                print("Well, sheit...problems...")
-
             # travel extra distance to ensure robot is in center of junction
             speedControl(BP,imu_calib,speed,10)
             map.updateLocation()
 
-            cur_angle += turn_ang
-            turnPi(BP,turn_ang)
-            map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
+            # Take path based on junction type
+            hazard_type = State.UNKWN
+            while hazard_type != None:
+                #dead end
+                if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = 180
+                    print("dead end")
+                #left option only
+                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = -90
+                    print("left option only")
+                #right option only
+                elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right option only")
+                #right and left options
+                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right and left options")
+                #left and forward
+                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                    turn_ang = 0
+                    print("left and forward options")
+                #right and forward
+                elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("right and forward options")
+                #4 way intersection
+                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                    turn_ang = 90
+                    print("4 way intersection")
+                else:
+                    turn_ang = 0
+                    print("Error: Detected hazard and was not able to select intersection type")
+
+                cur_angle += turn_ang
+                turnPi(BP,turn_ang)
+                map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
+
+                hazard_type, hazard_val =  hazardCheck(imu_calib)
+                if hazard_type != None:
+                    if turn_ang == 0:
+                        cur_front = 0
+                    elif turn_ang == 90:
+                        cur_right = 0
+                    elif turn_ang == -90:
+                        cur_left = 0
+                    else:
+                        print("Error: hazard detected and unable to reavaluate path")
+
+                    cur_angle -= turn_ang
+                    turnPi(BP,-turn_ang)
+
+                    map.addHazard(hazard_type,hazard_val)
+                    map.cur_direc = Dir((map.cur_direc.value - turn_ang // 90) % 4)  # change current direction property based on turn_ang
+
+                        
 
             # drive forward until exit junction (walls on each side and open ahead)
             act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))

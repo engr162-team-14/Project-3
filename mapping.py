@@ -176,14 +176,15 @@ class Map:
             for c in self.grid:
                 self.grid[r][c] = (self.grid[r][c]).value
 
-    def addHazard(self,haz_type,value,loc):
+    def addHazard(self,hazard_type,value):
         hazard_dict = {
             State.HEAT: ["Fire","Temperature (C)"],
             State.MAG: ["Damaged Power Station","Field Strenth (T)"]
         }
-        new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
+        hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
+
+        new_hazard = [hazard_dict[hazard_type][0],hazard_dict[hazard_type][1],value,hazard_loc[0], hazard_loc[1]]
         self.hazard_info.append(new_hazard)
-        self._setPoint(loc,haz_type)
 
     def pushInfo(self):
         self._setPoint(self.cur_loc,State.EXIT)

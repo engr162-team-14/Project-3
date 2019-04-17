@@ -6,7 +6,6 @@ import brickpi3
 import grovepi  
 
 def calibrate(BP):
-    #gyro = sensors.gyroCalib(BP)
     sensors.gyroCalib(BP)
     sensors.leftUltraCalib(BP)
     sensors.irCalib()
@@ -22,10 +21,6 @@ def calibrate(BP):
         "dly": calib[6],
         "std": calib[7]
     }
-    # Map = Map(...)
-    # BP = brickpi3.BrickPi3()
-    # Cal = Calibration(BP,imu_calib,gyro)
-    # return Cal
 
     return imu_calib
 
