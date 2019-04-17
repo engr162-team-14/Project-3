@@ -245,8 +245,9 @@ def imuMag():
             mag = mpu9250.readMagnet()
             mag_x = mag['x']
             mag_y = mag['y']
+            mag_z = mag['z']
             time.sleep(.25)
-        return [mag_x,mag_y]
+        return [mag_x,mag_y,mag_z]
     except Exception as error: 
         print("imuMag: ",error)
 
@@ -277,9 +278,6 @@ def irVal(pin1 = 14, pin2 = 15):
 
             return [sensor1_value, sensor2_value]
     except Exception as error: 
-<<<<<<< HEAD
-        print("irVal:",error)
-=======
         print("irVal:",error)
 
             
@@ -292,8 +290,7 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
                hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
     '''
     try:
-        '''    ************commented out for testing sake********************
-        haz = 0
+        
         mode = 0 
         while True:
             ir_val = irVal()
@@ -301,29 +298,17 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
             if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
                 time.sleep(.5)
                 haz_ir_val = irVal()
-                haz = 1
-
-                mode = 1
-            if mag_val[1] >= magy_thresh:
+                haz = State.HEAT
+                magnitude = sqrt(ir_val[0]**2 + ir_val[1]**2)
+            elif mag_val[1] >= magy_thresh:
                 time.sleep(.5)
                 haz_mag_val = imuMagFiltered(imu_calib)
-                haz = 2
-                #Between 0 and 5 cm
-                if haz_mag_val[0] >= 0 and haz_mag_val[0] <= magx_thresh:
-                    mode = 2
-                #Between -5 and 0 cm
-                elif haz_mag_val[0] >= -1 * magx_thresh and haz_mag_val[0] < 0:
-                    mode = 3
-                #Between 5 and 10 cm
-                elif haz_mag_val[0] > magx_thresh:
-                    mode = 4
-                #Between -10 and -5 cm
-                elif haz_mag_val[0] < magx_thresh:
-                    mode = 5
-        return haz
-        '''
-
-        return None, None
+                haz = State.Mag
+                magnitude = sqrt(mag_val[0]**2 + mag_val[1]**2 + mag_val[2]**2)
+            else:
+                haz = None
+                magnitude = 0
+                
+        return [haz, magnitude]
     except Exception as error:
         print("hazardCheck: ", error) 
->>>>>>> 09323fe444f519a55f3f3457947b4df50093e17a
