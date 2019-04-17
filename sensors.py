@@ -11,8 +11,6 @@ from IMUFilters import FindSTD
 from IMUFilters import InvGaussFilter
 from MPU9250 import MPU9250
 
-from mapping import State
-
 
 def gyroCalib(BP):
     try:
@@ -58,7 +56,7 @@ def gyroTest(BP):
 
 def leftUltraCalib(BP):
     try:
-        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)
+        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 1 to Gyro
         print("calibrating left ultrasonic sensor..")
         while True:
             try:
@@ -240,6 +238,18 @@ def imuMagTest():
     except Exception as error: 
         print("imuMagFiltered: ",error)
 
+def imuMag():
+    try:
+        mpu9250 = MPU9250()
+        while True:
+            mag = mpu9250.readMagnet()
+            mag_x = mag['x']
+            mag_y = mag['y']
+            time.sleep(.25)
+        return [mag_x,mag_y]
+    except Exception as error: 
+        print("imuMag: ",error)
+
 def irCalib(pin1 = 14, pin2 = 15):
     try:
         # Pin 14 and Pin 15 are A0 Port.
@@ -267,19 +277,11 @@ def irVal(pin1 = 14, pin2 = 15):
 
             return [sensor1_value, sensor2_value]
     except Exception as error: 
+<<<<<<< HEAD
+        print("irVal:",error)
+=======
         print("irVal:",error)
 
-
-########### WE ACTUALLY DONT NEED THIS ###############
-def hazardDist(imu_calib, mode, x, y):
-    try:
-        if mode == 1:
-            print('Ima workin on this')
-        if mode == 2:
-            print('Ima workin on this')
-    except Exception as error:
-        print("hazardDist: ", error)
-########################################################
             
 def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115):
     '''
@@ -290,8 +292,9 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
                hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
     '''
     try:
+        '''    ************commented out for testing sake********************
         haz = 0
-        mode = 0
+        mode = 0 
         while True:
             ir_val = irVal()
             mag_val = imuMagFiltered(imu_calib)
@@ -318,5 +321,9 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
                 elif haz_mag_val[0] < magx_thresh:
                     mode = 5
         return haz
+        '''
+
+        return None, None
     except Exception as error:
         print("hazardCheck: ", error) 
+>>>>>>> 09323fe444f519a55f3f3457947b4df50093e17a

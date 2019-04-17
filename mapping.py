@@ -14,7 +14,6 @@ class Dir(Enum):
     LEFT = 3
 
 class State(Enum):
-    UNEXPL = -1
     UNKWN = 0
     EXPL = 1
     ORIG = 5
@@ -29,23 +28,14 @@ class Unit(Enum):
 
 class Map:
     def __init__(self, origin = [0,0], map_num = 0, team = 14, unit = Unit.CM, direc = Dir.UP):
-        self.origin = origin
         self.grid = np.full((origin[1] + 1,origin[0] + 1),State.UNKWN)
-        self.grid[-origin[1] - 1][origin[0]] = State.ORIG
+        self.grid[len(self.grid) - origin[1] - 1][origin[0]] = State.ORIG 
         self.map_num = map_num
         self.team = team
         self.unit = unit
         self.hazard_info = [["Hazard Type","Parameter of Interest","Parameter Value","Hazard X Coordinate","Hazard Y Coordinate"]]
         self.cur_loc = origin
         self.cur_direc = direc
-
-    @property
-    def origin(self):
-        return self.__origin
-
-    @origin.setter
-    def origin(self, origin):
-        self.__origin = origin
 
     @property
     def grid(self):
@@ -127,59 +117,77 @@ class Map:
             self._appendRow()
         self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
 
+    def _setPointRelative(self,rel_direc = Dir.UP, point_type = State.CUR):
+        pt = []
+        if self.cur_direc == Dir.UP:
+            if rel_direc == Dir.UP:
+                pt = [self.cur_x, self.cur_y + 1]
+            elif rel_direc == Dir.DOWN:
+                pt = [self.cur_x, self.cur_y - 1]
+            elif rel_direc == Dir.LEFT:
+                pt = [self.cur_x - 1, self.cur_y]
+            elif rel_direc == Dir.RIGHT:
+                pt = [self.cur_x + 1, self.cur_y]
+        elif self.cur_direc == Dir.DOWN:
+            if rel_direc == Dir.UP:
+                pt = [self.cur_x, self.cur_y - 1]
+            elif rel_direc == Dir.DOWN:
+                pt = [self.cur_x, self.cur_y + 1]
+            elif rel_direc == Dir.LEFT:
+                pt = [self.cur_x + 1, self.cur_y]
+            elif rel_direc == Dir.RIGHT:
+                pt = [self.cur_x - 1, self.cur_y]
+        elif self.cur_direc == Dir.LEFT:
+            if rel_direc == Dir.UP:
+                pt = [self.cur_x - 1, self.cur_y]
+            elif rel_direc == Dir.DOWN:
+                pt = [self.cur_x + 1, self.cur_y]
+            elif rel_direc == Dir.LEFT:
+                pt = [self.cur_x, self.cur_y - 1]
+            elif rel_direc == Dir.RIGHT:
+                pt = [self.cur_x, self.cur_y + 1]
+        elif self.cur_direc == Dir.RIGHT:
+            if rel_direc == Dir.UP:
+                pt = [self.cur_x + 1, self.cur_y]
+            elif rel_direc == Dir.DOWN:
+                pt = [self.cur_x - 1, self.cur_y]
+            elif rel_direc == Dir.LEFT:
+                pt = [self.cur_x, self.cur_y + 1]
+            elif rel_direc == Dir.RIGHT:
+                pt = [self.cur_x, self.cur_y - 1]
+        else:
+            print("Error: Direction uninitialized or non-real value")
+
+        self._setPoint(pt,point_type)
+        return pt
+
     def _getPoint(self,pt):
         return self.grid[len(self.grid) - pt[1] - 1][pt[0]]
 
     def updateLocation(self):
-        self._setPoint([self.cur_x,self.cur_y],State.EXPL)
-        if self.cur_direc == Dir.UP:
-            self._setPoint([self.cur_x,self.cur_y + 1],State.CUR)
-            self.cur_loc = [self.cur_x,self.cur_y + 1]
-        elif self.cur_direc == Dir.DOWN:
-            self._setPoint([self.cur_x,self.cur_y - 1],State.CUR)
-            self.cur_loc = [self.cur_x,self.cur_y - 1] 
-        elif self.cur_direc == Dir.LEFT:
-            self._setPoint([self.cur_x - 1,self.cur_y],State.CUR)
-            self.cur_loc = [self.cur_x - 1,self.cur_y]
-        elif self.cur_direc == Dir.RIGHT:
-            self._setPoint([self.cur_x + 1,self.cur_y],State.CUR)
-            self.cur_loc = [self.cur_x + 1,self.cur_y]
-        else:
-            print("Error: Direction uninitialized or non-real value")
+        if self._getPoint(self.cur_loc) != State.ORIG:
+            self._setPoint([self.cur_x,self.cur_y],State.EXPL)
 
-    def evalJunction(self,has_front_path,has_left_path,has_right_path):
-        turn_ang = None
-
-        # Approaching new junction (edge of matrix)
-        if self.cur_x == len(self.grid[0]) or self.cur_y == 0:
-            pass
-
-        # Approaching new junction (within matrix)
-        elif self._getPoint((self.cur_x + 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y + 1)) != State.UNEXPL \
-            and self._getPoint((self.cur_x - 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y - 1)) != State.UNEXPL: 
-            pass
-
-        # Approaching pre-existing junction
-        else:
-            pass
-
-        return turn_ang
+        new_cur = self._setPointRelative(Dir.UP, State.CUR)
+        self.cur_loc = new_cur
 
     def _convertMap(self):
         for r in self.grid:
             for c in self.grid:
                 self.grid[r][c] = (self.grid[r][c]).value
 
-    def addHazard(self,haz_type,value,loc):
+    def addHazard(self,hazard_type,value):
         hazard_dict = {
             State.HEAT: ["Fire","Temperature (C)"],
             State.MAG: ["Damaged Power Station","Field Strenth (T)"]
         }
-        new_hazard = [hazard_dict[haz_type][0],hazard_dict[haz_type][1],value,loc[0],loc[1]]
+        hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
+
+        new_hazard = [hazard_dict[hazard_type][0],hazard_dict[hazard_type][1],value,hazard_loc[0], hazard_loc[1]]
         self.hazard_info.append(new_hazard)
-        self._setPoint(loc,haz_type)
 
     def pushInfo(self):
+        self._setPoint(self.cur_loc,State.EXIT)
         self._convertMap()
         info = {"map": self.grid,
                 "hazard table": self.hazard_info 

@@ -6,7 +6,6 @@ import brickpi3
 import grovepi  
 
 def calibrate(BP):
-    #gyro = sensors.gyroCalib(BP)
     sensors.gyroCalib(BP)
     sensors.leftUltraCalib(BP)
     sensors.irCalib()
@@ -22,10 +21,6 @@ def calibrate(BP):
         "dly": calib[6],
         "std": calib[7]
     }
-    # Map = Map(...)
-    # BP = brickpi3.BrickPi3()
-    # Cal = Calibration(BP,imu_calib,gyro)
-    # return Cal
 
     return imu_calib
 
@@ -40,8 +35,8 @@ if __name__ == '__main__':
 
     map = Map(origin,int(map_num),direc=Dir.UP)
     print(map.grid)
-    map._addPoint((1,1),State.EXPL)
+    map._setPoint((1,1),State.EXPL)
     print(map.grid)
-    map._addPoint((2,1),State.EXPL)
+    map._setPoint((2,1),State.EXPL)
     print(map.grid)
     map.pushInfo()

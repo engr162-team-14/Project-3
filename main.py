@@ -35,6 +35,7 @@ from sensors import hazardCheck
 
 from mapping import Map
 from mapping import Dir
+from mapping import State
     
 def calibrate(BP):
     gyroCalib(BP)
@@ -165,11 +166,13 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
             cur_left = act_dists[1]
             cur_right = act_dists[2] 
 
-            # Check for case where some paths have been explored
-            turn_ang = map.evalJunction(cur_front // set_dists[0], cur_left // set_dists[1], cur_right // set_dists[2])
+            # travel extra distance to ensure robot is in center of junction
+            speedControl(BP,imu_calib,speed,10)
+            map.updateLocation()
 
-            # If new junction (no previously explore paths taken), take default path based on junction type
-            if turn_ang == None:
+            # Take path based on junction type
+            hazard_type = State.UNKWN
+            while hazard_type != None:
                 #dead end
                 if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
                     turn_ang = 180
@@ -200,14 +203,30 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
                     print("4 way intersection")
                 else:
                     turn_ang = 0
-                    print("Well, sheit...problems...")
+                    print("Error: Detected hazard and was not able to select intersection type")
 
-            # travel extra distance to ensure robot is in center of junction
-            speedControl(BP,imu_calib,speed,10)
+                cur_angle += turn_ang
+                turnPi(BP,turn_ang)
+                map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
 
-            cur_angle += turn_ang
-            turnPi(BP,turn_ang)
-            map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
+                hazard_type, hazard_val =  hazardCheck(imu_calib)
+                if hazard_type != None:
+                    if turn_ang == 0:
+                        cur_front = 0
+                    elif turn_ang == 90:
+                        cur_right = 0
+                    elif turn_ang == -90:
+                        cur_left = 0
+                    else:
+                        print("Error: hazard detected and unable to reavaluate path")
+
+                    cur_angle -= turn_ang
+                    turnPi(BP,-turn_ang)
+
+                    map.addHazard(hazard_type,hazard_val)
+                    map.cur_direc = Dir((map.cur_direc.value - turn_ang // 90) % 4)  # change current direction property based on turn_ang
+
+                        
 
             # drive forward until exit junction (walls on each side and open ahead)
             act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
@@ -216,6 +235,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
                 setSpeed(BP,speed,speed)
                 act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
+            map.updateLocation()
 
             # out of maze if traveled more than 50 cm to exit junction
             if BP.get_motor_encoder(BP.PORT_C) > (50 * (360/(7* pi))):
