@@ -1,4 +1,29 @@
+''' MAPPING EXTRA GRAVEYARD
 
+    def evalJunction(self,has_front_path,has_left_path,has_right_path):
+        self._setPoint(self.cur_loc)
+        turn_ang = None
+
+        # Approaching new junction
+        if self.cur_x == len(self.grid[0]) or self.cur_y == 0 or \
+           self._getPoint((self.cur_x + 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y + 1)) != State.UNEXPL \
+           and self._getPoint((self.cur_x - 1, self.cur_y)) != State.UNEXPL and self._getPoint((self.cur_x, self.cur_y - 1)) != State.UNEXPL: 
+            if has_front_path:
+                self._setPointRelative(Dir.UP, State.UNEXPL)
+            if has_left_path:
+                self._setPointRelative(Dir.LEFT, State.UNEXPL)
+            if has_right_path:
+                self._setPointRelative(Dir.RIGHT, State.UNEXPL)
+
+        # Evaluate junction
+        if self._getPoint((self.cur_x + 1, self.cur_y)) == State.UNEXPL:
+            turn_ang = 90
+        elif self._getPoint((self.cur_x, self.cur_y)) == State.UNEXPL:
+            turn_ang = 90
+
+        return turn_ang
+
+'''
 
 '''
 def pt_2_pt_abs (BP, imu_calib, speed, pt_1, pt_2, init_ang, length_conv = 5, haz_mode = Hazard.NO_HAZARDS):

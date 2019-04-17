@@ -40,8 +40,8 @@ if __name__ == '__main__':
 
     map = Map(origin,int(map_num),direc=Dir.UP)
     print(map.grid)
-    map._addPoint((1,1),State.EXPL)
+    map._setPoint((1,1),State.EXPL)
     print(map.grid)
-    map._addPoint((2,1),State.EXPL)
+    map._setPoint((2,1),State.EXPL)
     print(map.grid)
     map.pushInfo()

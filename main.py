@@ -165,45 +165,42 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
             cur_left = act_dists[1]
             cur_right = act_dists[2] 
 
-            # Check for case where some paths have been explored
-            turn_ang = map.evalJunction(cur_front // set_dists[0], cur_left // set_dists[1], cur_right // set_dists[2])
-
-            # If new junction (no previously explore paths taken), take default path based on junction type
-            if turn_ang == None:
-                #dead end
-                if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                    turn_ang = 180
-                    print("dead end")
-                #left option only
-                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                    turn_ang = -90
-                    print("left option only")
-                #right option only
-                elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                    turn_ang = 90
-                    print("right option only")
-                #right and left options
-                elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                    turn_ang = 90
-                    print("right and left options")
-                #left and forward
-                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                    turn_ang = 0
-                    print("left and forward options")
-                #right and forward
-                elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                    turn_ang = 90
-                    print("right and forward options")
-                #4 way intersection
-                elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                    turn_ang = 90
-                    print("4 way intersection")
-                else:
-                    turn_ang = 0
-                    print("Well, sheit...problems...")
+            # Take path based on junction type
+            #dead end
+            if cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                turn_ang = 180
+                print("dead end")
+            #left option only
+            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                turn_ang = -90
+                print("left option only")
+            #right option only
+            elif cur_front <= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                turn_ang = 90
+                print("right option only")
+            #right and left options
+            elif cur_front <= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                turn_ang = 90
+                print("right and left options")
+            #left and forward
+            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+                turn_ang = 0
+                print("left and forward options")
+            #right and forward
+            elif cur_front >= set_dists[0] and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                turn_ang = 90
+                print("right and forward options")
+            #4 way intersection
+            elif cur_front >= set_dists[0] and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+                turn_ang = 90
+                print("4 way intersection")
+            else:
+                turn_ang = 0
+                print("Well, sheit...problems...")
 
             # travel extra distance to ensure robot is in center of junction
             speedControl(BP,imu_calib,speed,10)
+            map.updateLocation()
 
             cur_angle += turn_ang
             turnPi(BP,turn_ang)
@@ -216,6 +213,7 @@ def mazeMap(BP,imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dis
                 setSpeed(BP,speed,speed)
                 act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
                 time.sleep(.1)
+            map.updateLocation()
 
             # out of maze if traveled more than 50 cm to exit junction
             if BP.get_motor_encoder(BP.PORT_C) > (50 * (360/(7* pi))):
