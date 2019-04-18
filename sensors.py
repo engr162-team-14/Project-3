@@ -15,14 +15,14 @@ from mapping import State
 
 def gyroCalib(BP):
     try:
-        BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.NONE)
-        BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)  #set BP port 1 to Gyro
+        BP.set_sensor_type(BP.PORT_4, BP.SENSOR_TYPE.NONE)
+        BP.set_sensor_type(BP.PORT_4, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)  #set BP port 4 to Gyro
         print("calibrating gyroscope..")
         while True:
             try:
-                print(BP.get_sensor(BP.PORT_1))
+                print(BP.get_sensor(BP.PORT_4))
                 print("success")
-                return BP.get_sensor(BP.PORT_1)
+                return BP.get_sensor(BP.PORT_4)
             except Exception:
                 pass              
             time.sleep(0.02) 
@@ -33,7 +33,7 @@ def gyroCalib(BP):
 
 def gyroVal(BP):
     try:
-        snsr = (BP.get_sensor(BP.PORT_1))
+        snsr = (BP.get_sensor(BP.PORT_4))
         snsr = snsr[0]
         return snsr
     except Exception as error: 
@@ -48,7 +48,7 @@ def printGyroVal(BP):
 def gyroTest(BP):
     try:
         while True:
-            rot = BP.get_sensor(BP.PORT_1)
+            rot = BP.get_sensor(BP.PORT_4)
             print(rot)
     except Exception as error: 
         print("gyroTest:",error)
@@ -57,7 +57,7 @@ def gyroTest(BP):
 
 def leftUltraCalib(BP):
     try:
-        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 1 to Gyro
+        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 3 to Gyro
         print("calibrating left ultrasonic sensor..")
         while True:
             try:
