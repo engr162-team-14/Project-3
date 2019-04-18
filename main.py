@@ -435,13 +435,13 @@ if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
 
-    ####### Sensor Tests #########
+    ############ Sensor Tests ###############
     # gyroTest(BP)
     # ultrasTest(BP)
     # imuMagTest()
     # irTest()
     # speedControl(BP,imu_calib,12,200)
-    ##############################
+    #########################################
 
     set_dists = [35,11,11]
 
