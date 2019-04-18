@@ -57,7 +57,7 @@ def gyroTest(BP):
 
 def leftUltraCalib(BP):
     try:
-        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 3 to Gyro
+        BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)  #set BP port 3 to Left Ultra
         print("calibrating left ultrasonic sensor..")
         while True:
             try:
@@ -75,7 +75,7 @@ def leftUltraCalib(BP):
 def leftUltraVal(BP):
     try:
         snsr = (BP.get_sensor(BP.PORT_3))
-        #print("Front Ultra (sensor): "+str(snsr))
+        #print("Left Ultra: "+str(snsr))
         return snsr
     except Exception as error: 
         print("frontUltraVal:",error)
