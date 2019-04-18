@@ -102,102 +102,129 @@ class Map:
         self.__cur_direc = cur_direc
 
     def _appendRow(self):
-        self.grid = np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
+        try:
+            self.grid = np.insert(self.grid, 0, np.full(len(self.grid[0]),State.UNKWN),axis=0)
+        except Exception as error: 
+            print("_appendRow:",error)
 
     def _appendCol(self):
-        insert = np.full((len(self.grid),1), State.UNKWN)
-        self.grid = np.append(self.grid, insert, axis=1)
+        try:
+            insert = np.full((len(self.grid),1), State.UNKWN)
+            self.grid = np.append(self.grid, insert, axis=1)
+        except Exception as error: 
+            print("_appendCol:",error)
 
     def _setPoint(self,pt,point_type = State.EXPL):
-        if pt[0] < 0 or pt[1] < 0:
-            print("Error: Unable to add point with negative coordinates")
-        if pt[0] > len(self.grid[0]) - 1:
-            self._appendCol()
-        if pt[1] > len(self.grid) - 1:
-            self._appendRow()
-        self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
+        try:
+            if pt[0] < 0 or pt[1] < 0:
+                print("Error: Unable to add point with negative coordinates")
+            if pt[0] > len(self.grid[0]) - 1:
+                self._appendCol()
+            if pt[1] > len(self.grid) - 1:
+                self._appendRow()
+            self.grid[len(self.grid) - pt[1] - 1][pt[0]] = point_type
+        except Exception as error: 
+            print("_setPoint:",error)
 
     def _setPointRelative(self,rel_direc = Dir.UP, point_type = State.CUR):
-        pt = []
-        if self.cur_direc == Dir.UP:
-            if rel_direc == Dir.UP:
-                pt = [self.cur_x, self.cur_y + 1]
-            elif rel_direc == Dir.DOWN:
-                pt = [self.cur_x, self.cur_y - 1]
-            elif rel_direc == Dir.LEFT:
-                pt = [self.cur_x - 1, self.cur_y]
-            elif rel_direc == Dir.RIGHT:
-                pt = [self.cur_x + 1, self.cur_y]
-        elif self.cur_direc == Dir.DOWN:
-            if rel_direc == Dir.UP:
-                pt = [self.cur_x, self.cur_y - 1]
-            elif rel_direc == Dir.DOWN:
-                pt = [self.cur_x, self.cur_y + 1]
-            elif rel_direc == Dir.LEFT:
-                pt = [self.cur_x + 1, self.cur_y]
-            elif rel_direc == Dir.RIGHT:
-                pt = [self.cur_x - 1, self.cur_y]
-        elif self.cur_direc == Dir.LEFT:
-            if rel_direc == Dir.UP:
-                pt = [self.cur_x - 1, self.cur_y]
-            elif rel_direc == Dir.DOWN:
-                pt = [self.cur_x + 1, self.cur_y]
-            elif rel_direc == Dir.LEFT:
-                pt = [self.cur_x, self.cur_y - 1]
-            elif rel_direc == Dir.RIGHT:
-                pt = [self.cur_x, self.cur_y + 1]
-        elif self.cur_direc == Dir.RIGHT:
-            if rel_direc == Dir.UP:
-                pt = [self.cur_x + 1, self.cur_y]
-            elif rel_direc == Dir.DOWN:
-                pt = [self.cur_x - 1, self.cur_y]
-            elif rel_direc == Dir.LEFT:
-                pt = [self.cur_x, self.cur_y + 1]
-            elif rel_direc == Dir.RIGHT:
-                pt = [self.cur_x, self.cur_y - 1]
-        else:
-            print("Error: Direction uninitialized or non-real value")
+        try:
+            pt = []
+            if self.cur_direc == Dir.UP:
+                if rel_direc == Dir.UP:
+                    pt = [self.cur_x, self.cur_y + 1]
+                elif rel_direc == Dir.DOWN:
+                    pt = [self.cur_x, self.cur_y - 1]
+                elif rel_direc == Dir.LEFT:
+                    pt = [self.cur_x - 1, self.cur_y]
+                elif rel_direc == Dir.RIGHT:
+                    pt = [self.cur_x + 1, self.cur_y]
+            elif self.cur_direc == Dir.DOWN:
+                if rel_direc == Dir.UP:
+                    pt = [self.cur_x, self.cur_y - 1]
+                elif rel_direc == Dir.DOWN:
+                    pt = [self.cur_x, self.cur_y + 1]
+                elif rel_direc == Dir.LEFT:
+                    pt = [self.cur_x + 1, self.cur_y]
+                elif rel_direc == Dir.RIGHT:
+                    pt = [self.cur_x - 1, self.cur_y]
+            elif self.cur_direc == Dir.LEFT:
+                if rel_direc == Dir.UP:
+                    pt = [self.cur_x - 1, self.cur_y]
+                elif rel_direc == Dir.DOWN:
+                    pt = [self.cur_x + 1, self.cur_y]
+                elif rel_direc == Dir.LEFT:
+                    pt = [self.cur_x, self.cur_y - 1]
+                elif rel_direc == Dir.RIGHT:
+                    pt = [self.cur_x, self.cur_y + 1]
+            elif self.cur_direc == Dir.RIGHT:
+                if rel_direc == Dir.UP:
+                    pt = [self.cur_x + 1, self.cur_y]
+                elif rel_direc == Dir.DOWN:
+                    pt = [self.cur_x - 1, self.cur_y]
+                elif rel_direc == Dir.LEFT:
+                    pt = [self.cur_x, self.cur_y + 1]
+                elif rel_direc == Dir.RIGHT:
+                    pt = [self.cur_x, self.cur_y - 1]
+            else:
+                print("Error: Direction uninitialized or non-real value")
 
-        self._setPoint(pt,point_type)
-        return pt
+            self._setPoint(pt,point_type)
+            return pt
+        except Exception as error: 
+            print("_setPointRelative:",error)
 
     def _getPoint(self,pt):
-        return self.grid[len(self.grid) - pt[1] - 1][pt[0]]
+        try:
+            return self.grid[len(self.grid) - pt[1] - 1][pt[0]]
+        except Exception as error: 
+            print("_getPoint:",error)
 
     def updateLocation(self):
-        if self._getPoint(self.cur_loc) != State.ORIG:
-            self._setPoint([self.cur_x,self.cur_y],State.EXPL)
+        try:
+            if self._getPoint(self.cur_loc) != State.ORIG:
+                self._setPoint([self.cur_x,self.cur_y],State.EXPL)
 
-        new_cur = self._setPointRelative(Dir.UP, State.CUR)
-        self.cur_loc = new_cur
+            new_cur = self._setPointRelative(Dir.UP, State.CUR)
+            self.cur_loc = new_cur
+        except Exception as error: 
+            print("updateLocation:",error)
 
     def _convertMap(self):
-        for r in range(len(self.grid)):
-            for c in range(len(self.grid[r])):
-                self.grid[r][c] = (self.grid[r][c]).value
+        try:
+            for r in range(len(self.grid)):
+                for c in range(len(self.grid[r])):
+                    self.grid[r][c] = (self.grid[r][c]).value
+        except Exception as error: 
+            print("_convertMap:",error)
 
     def addHazard(self,hazard_type,value):
-        hazard_dict = {
-            State.HEAT: ["Fire","Temperature (C)"],
-            State.MAG: ["Damaged Power Station","Field Strenth (T)"]
-        }
-        hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
+        try:
+            hazard_dict = {
+                State.HEAT: ["Fire","Temperature (C)"],
+                State.MAG: ["Damaged Power Station","Field Strenth (T)"]
+            }
+            hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
 
-        new_hazard = [hazard_dict[hazard_type][0],hazard_dict[hazard_type][1],value,hazard_loc[0], hazard_loc[1]]
-        self.hazard_info.append(new_hazard)
+            new_hazard = [hazard_dict[hazard_type][0],hazard_dict[hazard_type][1],value,hazard_loc[0], hazard_loc[1]]
+            self.hazard_info.append(new_hazard)
+        except Exception as error: 
+            print("addHazard:",error)
 
     def pushInfo(self):
-        self._setPoint(self.cur_loc,State.EXIT)
-        self._convertMap()
-        info = {"map": self.grid,
-                "hazard table": self.hazard_info 
-        }
-        with open('map.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerows(info["map"])
+        try:
+            self._setPoint(self.cur_loc,State.EXIT)
+            self._convertMap()
+            info = {"map": self.grid,
+                    "hazard table": self.hazard_info 
+            }
+            with open('map_' + str(self.map_num) + '.csv', 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerows(info["map"])
 
-        with open('hazards.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerows(info["hazard table"])    
+            with open('hazards.csv', 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerows(info["hazard table"])    
 
-        return info
+            return info
+        except Exception as error: 
+            print("pushInfo:",error)
