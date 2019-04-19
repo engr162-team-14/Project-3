@@ -294,7 +294,7 @@ def hazardCheck(imu_calib, ir_thresh = 34 ,mag_thresh = 125 , magx_thresh = 0):
         ir_val = irVal()
         ir_curr = (ir_val[0] + ir_val[1]) / 2
         
-        if ir_curr > ir_thresh
+        if ir_curr > ir_thresh:
             time.sleep(.5)
             haz_ir_val = irVal()
             if haz_ir_val[0] >= ir_thresh or haz_ir_val[1] >= ir_thresh:
