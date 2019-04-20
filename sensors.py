@@ -98,6 +98,8 @@ def getUltras(BP,port_f=3,port_r=4):
         #     return ultras
         # else:
         #     return None
+
+        print("getUltras:", ultras)
         return ultras
     except Exception as error: 
         print("getUltras:",error)
@@ -291,30 +293,29 @@ def hazardCheck(imu_calib, ir_thresh = 130 ,magx_thresh = 30 , magy_thresh = 115
                hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
     '''
     try:
-        while True:
-            ir_val = irVal()
-            mag_val = imuMagFiltered(imu_calib)
-            if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
-                time.sleep(.5)
-                haz_ir_val = irVal()
-                if haz_ir_val[0] >= ir_thresh or haz_ir_val[1] >= ir_thresh:
-                    haz = State.HEAT
-                    magnitude = math.sqrt(ir_val[0]**2 + ir_val[1]**2)
-                else:
-                    haz = None
-                    magnitude = None
-            elif mag_val[1] >= magy_thresh:
-                time.sleep(.5)
-                haz_mag_val = imuMagFiltered(imu_calib)
-                if haz_mag_val[1] >= magy_thresh:
-                    haz = State.Mag
-                    magnitude = math.sqrt(mag_val[0]**2 + mag_val[1]**2 + mag_val[2]**2)
-                else:
-                    haz = None
-                    magnitude = None
+        ir_val = irVal()
+        mag_val = imuMagFiltered(imu_calib)
+        if ir_val[0] >= ir_thresh or ir_val[1] >= ir_thresh:
+            time.sleep(.5)
+            haz_ir_val = irVal()
+            if haz_ir_val[0] >= ir_thresh or haz_ir_val[1] >= ir_thresh:
+                haz = State.HEAT
+                magnitude = math.sqrt(ir_val[0]**2 + ir_val[1]**2)
             else:
                 haz = None
                 magnitude = None
+        elif mag_val[1] >= magy_thresh:
+            time.sleep(.5)
+            haz_mag_val = imuMagFiltered(imu_calib)
+            if haz_mag_val[1] >= magy_thresh:
+                haz = State.Mag
+                magnitude = math.sqrt(mag_val[0]**2 + mag_val[1]**2 + mag_val[2]**2)
+            else:
+                haz = None
+                magnitude = None
+        else:
+            haz = None
+            magnitude = None
                 
         return [haz, magnitude]
     except Exception as error:

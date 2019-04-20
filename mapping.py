@@ -210,6 +210,7 @@ class Map:
         except Exception as error: 
             print("addHazard:",error)
 
+    ##TODO: Add in additional fields in csv files
     def pushInfo(self):
         try:
             self._setPoint(self.cur_loc,State.EXIT)
