@@ -115,7 +115,7 @@ def ultrasTest(BP):
     except KeyboardInterrupt:
         BP.reset_all()
 
-#filtering Ultras
+## (Maybe) TODO: Filtering ultras
 
 def imuCalib(width=1, depth=100, dly=0.01):
     try:
@@ -282,8 +282,7 @@ def irVal(pin1 = 14, pin2 = 15):
             return [sensor1_value, sensor2_value]
     except Exception as error: 
         print("irVal:",error)
-
-            
+        
 def hazardCheck(imu_calib, ir_thresh = 34 ,mag_thresh = 125 , magx_thresh = 0):
     '''
     Description: Checks for hazards directly in front of robot given sensor thresholds \n 

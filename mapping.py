@@ -27,12 +27,15 @@ class Unit(Enum):
     IN = 1
 
 class Map:
-    def __init__(self, origin = [0,0], map_num = 0, team = 14, unit = Unit.CM, direc = Dir.UP):
+    def __init__(self, origin = [0,0], map_num = 0, direc = Dir.UP, team = 14, unit_length = 40, unit = Unit.CM, notes = "n/a"):
         self.grid = np.full((origin[1] + 1,origin[0] + 1),State.UNKWN)
         self.grid[len(self.grid) - origin[1] - 1][origin[0]] = State.ORIG 
+        self.origin = origin
         self.map_num = map_num
         self.team = team
+        self.unit_length = unit_length
         self.unit = unit
+        self.notes = notes
         self.hazard_info = [["Hazard Type","Parameter of Interest","Parameter Value","Hazard X Coordinate","Hazard Y Coordinate"]]
         self.cur_loc = origin
         self.cur_direc = direc
@@ -44,6 +47,14 @@ class Map:
     @grid.setter
     def grid(self, grid):
         self.__grid = grid
+
+    @property
+    def origin(self):
+        return self.__origin
+
+    @origin.setter
+    def origin(self, origin):
+        self.__origin = origin
 
     @property
     def map_num(self):
@@ -62,6 +73,14 @@ class Map:
         self.__team = team
 
     @property
+    def unit_length(self):
+        return self.__unit_length
+
+    @unit_length.setter
+    def unit_length(self, unit_length):
+        self.__unit_length = unit_length
+
+    @property
     def unit(self):
         return self.__unit
 
@@ -69,6 +88,14 @@ class Map:
     def unit(self, unit):
         self.__unit = unit
 
+    @property
+    def notes(self):
+        return self.__notes
+
+    @notes.setter
+    def notes(self, notes):
+        self.__notes = notes
+    
     @property
     def hazard_info(self):
         return self.__hazard_info
@@ -199,18 +226,19 @@ class Map:
 
     def addHazard(self,hazard_type,value):
         try:
+            hazard_loc = self.cur_loc
+            self._setPoint(self.cur_loc, hazard_type)
+
             hazard_dict = {
                 State.HEAT: ["Fire","Temperature (C)"],
                 State.MAG: ["Damaged Power Station","Field Strenth (T)"]
             }
-            hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
-
             new_hazard = [hazard_dict[hazard_type][0],hazard_dict[hazard_type][1],value,hazard_loc[0], hazard_loc[1]]
             self.hazard_info.append(new_hazard)
         except Exception as error: 
             print("addHazard:",error)
 
-    ##TODO: Add in additional fields in csv files
+    ##TODO: Test additional fields in csv files
     def pushInfo(self):
         try:
             self._setPoint(self.cur_loc,State.EXIT)
@@ -220,10 +248,23 @@ class Map:
             }
             with open('map_' + str(self.map_num) + '.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
+                writer.writerow("Team: %d" % (self.team))
+                writer.writerow("Map: %d" % (self.map_num))
+                writer.writerow("Unit length: %d" % (self.unit_length))
+                writer.writerow("Unit length: %d" % (self.unit.name))
+                writer.writerow("Origin: (%d,%d)" % (self.origin[0], self.origin[1]))
+                writer.writerow("Notes: %s" % (self.notes))
+                writer.writerow("")
+
                 writer.writerows(info["map"])
 
             with open('hazards.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
+                writer.writerow("Team: %d" % (self.team))
+                writer.writerow("Map: %d" % (self.map_num))
+                writer.writerow("Notes: %s" % (self.notes))
+                writer.writerow("")
+
                 writer.writerows(info["hazard table"])    
 
             return info

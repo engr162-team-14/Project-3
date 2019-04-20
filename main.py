@@ -56,6 +56,7 @@ def calibrate(BP):
 
     return imu_calib
 
+##TODO: Test Hazard mapping and reaction
 def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp, ki, gyro_kp, gyro_ki):
     try:
         dead_band_dist = .5
@@ -77,6 +78,7 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                 map.updateLocation()
                 print("Update loc -- ultra PI")
 
+            hazard_type, hazard_val =  hazardCheck(imu_calib)
             if abs(errors[1]) <= dead_band_dist:
                 print("inside dead band")
                 dead_band_dist = 4
@@ -92,7 +94,7 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                 gyro_dt = .1
 
                 print("gyro PI Control init")
-                while abs(act_dists[1] - set_dists[1]) < dead_band_dist and act_dists[0] > set_dists[0] and act_dists[2] < set_dists[2] + bfr_dist:
+                while hazard_type == None and abs(act_dists[1] - set_dists[1]) < dead_band_dist and act_dists[0] > set_dists[0] and act_dists[2] < set_dists[2] + bfr_dist:
 
                     #if encoder value says weve traveled 40 cm --> reset initial encoder value and update current location
                     if (BP.get_motor_encoder(BP.PORT_C) + BP.get_motor_encoder(BP.PORT_C)) / 2 < -(40 * (360/(7* pi))):
@@ -112,10 +114,10 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                         setSpeed(BP, speed, speed - gyro_output)
                     
                     act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
+                    hazard_type, hazard_val =  hazardCheck(imu_calib)
 
                     time.sleep(gyro_dt)
-                dead_band_dist = .5
-                print("ultrasonic PI Control init")
+                dead_band_dist = .5   # reset deadband distance for ultrasonic controller
 
             else:    
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))
@@ -139,10 +141,17 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                         setSpeed(BP, speed - outputs[2], speed)  
 
             act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle))) # cos(relative theta) of all ultrasonic distances
+            if hazard_type != None:
+                setSpeed(BP,0,0)
+                cur_angle += 180
+                turnPi(BP,180)
 
-            time.sleep(.05)
-        
+                map.addHazard(hazard_type,hazard_val)
+                map.cur_direc = Dir((map.cur_direc.value - 180 // 90) % 4)  # change current direction property based on turn_ang
+
+            time.sleep(.01)
         setSpeed(BP,0,0)
+
         return cur_angle, act_dists
     except Exception as error: 
         print("wallGuide:",error)
@@ -152,61 +161,42 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
 def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bfr_dist):
     try:
         # Take path based on junction type
-        hazard_type = State.UNKWN
-        while hazard_type != None:
-            #dead end
-            if cur_front <= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = 180
-                speedControl(BP,imu_calib,-5,5)
-                print("dead end")
-            #left option only
-            elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = -90
-                print("left option only")
-            #right option only
-            elif cur_front <= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right option only")
-            #right and left options
-            elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right and left options")
-            #left and forward
-            elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
-                turn_ang = 0
-                print("left and forward options")
-            #right and forward
-            elif cur_front >= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("right and forward options")
-            #4 way intersection
-            elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
-                turn_ang = 90
-                print("4 way intersection")
-            else:
-                turn_ang = 0
-                print("Error: Detected hazard and was not able to select intersection type")
+        #dead end
+        if cur_front <= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+            turn_ang = 180
+            speedControl(BP,imu_calib,-5,5)
+            print("dead end")
+        #left option only
+        elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+            turn_ang = -90
+            print("left option only")
+        #right option only
+        elif cur_front <= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+            turn_ang = 90
+            print("right option only")
+        #right and left options
+        elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+            turn_ang = 90
+            print("right and left options")
+        #left and forward
+        elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
+            turn_ang = 0
+            print("left and forward options")
+        #right and forward
+        elif cur_front >= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+            turn_ang = 90
+            print("right and forward options")
+        #4 way intersection
+        elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
+            turn_ang = 90
+            print("4 way intersection")
+        else:
+            turn_ang = 0
+            print("Error: Detected hazard and was not able to select intersection type")
 
-            cur_angle += turn_ang
-            turnPi(BP,turn_ang)
-            map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
-
-            hazard_type, hazard_val =  hazardCheck(imu_calib)
-            if hazard_type != None:
-                if turn_ang == 0:
-                    cur_front = 0
-                elif turn_ang == 90:
-                    cur_right = 0
-                elif turn_ang == -90:
-                    cur_left = 0
-                else:
-                    print("Error: hazard detected and unable to reavaluate path")
-
-                cur_angle -= turn_ang
-                turnPi(BP,-turn_ang)
-
-                map.addHazard(hazard_type,hazard_val)
-                map.cur_direc = Dir((map.cur_direc.value - turn_ang // 90) % 4)  # change current direction property based on turn_ang
+        cur_angle += turn_ang
+        turnPi(BP,turn_ang)
+        map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
 
         return cur_angle
     except Exception as error: 
@@ -214,7 +204,6 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
     except KeyboardInterrupt:
         stop(BP)
 
-##TODO: Add hazard detection in wall guide and remove in handle junction
 def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dist = 15,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
