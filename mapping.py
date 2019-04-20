@@ -226,8 +226,7 @@ class Map:
 
     def addHazard(self,hazard_type,value):
         try:
-            hazard_loc = self.cur_loc
-            self._setPoint(self.cur_loc, hazard_type)
+            hazard_loc = self._setPointRelative(Dir.UP, hazard_type)
 
             hazard_dict = {
                 State.HEAT: ["Fire","Temperature (C)"],
@@ -251,7 +250,7 @@ class Map:
                 writer.writerow("Team: %d" % (self.team))
                 writer.writerow("Map: %d" % (self.map_num))
                 writer.writerow("Unit length: %d" % (self.unit_length))
-                writer.writerow("Unit length: %d" % (self.unit.name))
+                writer.writerow("Unit length: %s" % (self.unit.name))
                 writer.writerow("Origin: (%d,%d)" % (self.origin[0], self.origin[1]))
                 writer.writerow("Notes: %s" % (self.notes))
                 writer.writerow("")

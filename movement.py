@@ -21,7 +21,7 @@ from sensors import imuMagTest
 from sensors import irCalib
 from sensors import irTest
 from sensors import irVal
-from sensors import hazardCheck
+from sensors import State
 
 class Sensor(Enum):
     FRONT = 0
@@ -117,7 +117,7 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
             start_time = time.time()
 
             #if looking for hazards and there is 
-            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(imu_calib):
+            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(BP, imu_calib):
                 setSpeed(BP,0,0)
                 return pos
 
@@ -192,8 +192,8 @@ def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEF
         cur_dist = leftUltraVal(BP)
         if sensor == Sensor.LEFT:
             while cur_ang <= (init_ang + dtheta):
-                print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
-                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                # print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                #     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
                 if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
@@ -207,8 +207,8 @@ def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEF
             cur_ang = gyroVal(BP)
             cur_dist = leftUltraVal(BP)
             while cur_ang >= (init_ang - dtheta):
-                print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
-                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                # print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                #     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
                 if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
@@ -374,3 +374,50 @@ def cargoRelease(BP, imu_calib):
         print("cargoRelease: ", error)
     except KeyboardInterrupt:
         stop(BP)
+
+def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 40, mag_thresh_stationary = 75):
+    '''
+    Description: Checks for hazards directly in front of robot given sensor thresholds \n 
+    Return value: hazardCheck returns [ hazard_type, hazard_val ] \n
+               hazard_type -- State Enum that signifies hazard type (State.HEAT, State.Mag,
+                                or None if there is no hazard within ~40cm)
+               hazard_val  -- Measured relative strength of hazard detected (None if hazard_type is None)
+    '''
+    try:
+        ir_val = irVal()
+        ir_curr = (ir_val[0] + ir_val[1]) / 2
+
+        mag_val = imuMagFiltered(imu_calib)
+        mag_curr = math.sqrt(mag_val[0]**2 + mag_val[1]**2 + mag_val[2]**2)
+        print("mag_cur:",mag_curr)
+        
+        if ir_curr > ir_thresh:
+            print("Found IR Hazard")
+            setSpeed(BP,0,0)
+            haz_ir_val = irVal()
+            if haz_ir_val[0] >= ir_thresh or haz_ir_val[1] >= ir_thresh:
+                haz = State.HEAT
+                magnitude = (haz_ir_val[0] + haz_ir_val[1]) / 2
+            else:
+                haz = None
+                magnitude = None
+        elif mag_curr >= mag_thresh_mov:
+            print("Found Mag Hazard")
+            setSpeed(BP,0,0)
+            time.sleep(.75)
+            haz_mag_val = imuMagFiltered(imu_calib)
+            haz_mag_curr = math.sqrt(haz_mag_val[0]**2 + haz_mag_val[1]**2 + haz_mag_val[2]**2)
+            print("haz_mag_cur:",mag_curr)
+            if haz_mag_curr > mag_thresh_stationary:
+                haz = State.MAG
+                magnitude = math.sqrt(haz_mag_val[0]**2 + haz_mag_val[1]**2 + haz_mag_val[2]**2)
+            else:
+                haz = None
+                magnitude = None
+        else:
+            haz = None
+            magnitude = None
+                
+        return [haz, magnitude]
+    except Exception as error:
+        print("hazardCheck: ", error)

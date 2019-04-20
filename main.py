@@ -16,6 +16,7 @@ from movement import pt_2_pt
 from movement import cargoRelease
 from movement import stop
 from movement import Sensor
+from movement import hazardCheck
 
 from sensors import gyroCalib
 from sensors import gyroVal
@@ -31,13 +32,18 @@ from sensors import imuMagTest
 from sensors import irCalib
 from sensors import irTest
 from sensors import irVal
-from sensors import hazardCheck
 
 from mapping import Map
 from mapping import Dir
 from mapping import State
     
 def calibrate(BP):
+    '''
+    Description: Calibrates gyroscope, ultrasonic, IR, and imu sensors \n 
+    Return value: hazardCheck returns imu_calib \n
+               hazard_type -- Dictionary that holds calibration
+                              data for each sensor component of imu
+    '''
     gyroCalib(BP)
     leftUltraCalib(BP)
     irCalib()
@@ -56,18 +62,29 @@ def calibrate(BP):
 
     return imu_calib
 
-##TODO: Test Hazard mapping and reaction
 def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp, ki, gyro_kp, gyro_ki):
+    '''
+    Description: Navigates within a corridor using two PI controllers based on distance from the set point (between the walls) \n 
+    Return value: wallGuide returns cur_angle, act_dists \n
+               cur_angle -- integer that corresponds to current gyroscope position
+               act_dists -- array of integers that correspong to front, left, and right ultrasonic sensor readings 
+    '''
     try:
-        dead_band_dist = .5
-        errors = [-1,1,1]
+        dead_band_dist = .5            # distance from set point where controller switches from ultras to gyroscope
+        errors = [-1,1,1]              # ultrasonic process errors
         errors_p = [0,0,0]
         integs = [0,0,0]
-        dt = .2                   # loop iteration ~= .15 + .05 sleep
+        dt = .2                        # loop iteration ~= .18 + .01 sleep
+        hazard_type = None             # enum that signifies type of hazard identified (None if no hazard)
+        has_encountered_haz = False
 
-        print("ultrasonic PI init")
+        print("outisde dead band --> ultrasonic PI control init")
+
+        # offset motor encoders to track distance traveled current location tracking
         BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
         BP.offset_motor_encoder(BP.PORT_B,BP.get_motor_encoder(BP.PORT_B))
+
+        # travels in corridor as long as left and right sensors see walls and front sensor does not (within set distance)
         while act_dists[0] > set_dists[0] and act_dists[1] < set_dists[1] + bfr_dist and act_dists[2] < set_dists[2] + bfr_dist:
             errors = np.subtract(set_dists, act_dists)
 
@@ -78,24 +95,25 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                 map.updateLocation()
                 print("Update loc -- ultra PI")
 
-            hazard_type, hazard_val =  hazardCheck(imu_calib)
-            if abs(errors[1]) <= dead_band_dist:
-                print("inside dead band")
-                dead_band_dist = 4
+            # check for hazards if not already identified one in given corridor
+            if hazard_type == None:
+                hazard_type, hazard_val =  hazardCheck(BP, imu_calib)
 
-                # integral windup reset
+            # switch to gyro PI controller if within dead band
+            if abs(errors[1]) <= dead_band_dist:
+                print("inside dead band -> Gyro PI control init")
+                dead_band_dist = 2  # allow 2cm deviance before returning to ultrasonic PI control
+
+                # integral windup reset and return to parallel w/ wall angle
                 integs = [0,0,0]
-                
                 turnPi(BP,cur_angle - gyroVal(BP))
 
                 gyro_error = -1
                 gyro_error_p = 0
                 gyro_integ = 0
                 gyro_dt = .1
-
-                print("gyro PI Control init")
-                while hazard_type == None and abs(act_dists[1] - set_dists[1]) < dead_band_dist and act_dists[0] > set_dists[0] and act_dists[2] < set_dists[2] + bfr_dist:
-
+                # navigates corridor while maintaining angle so long as a junction/hazard is not reached or devaite more than dead_band_dist from set pt
+                while (hazard_type == None or has_encountered_haz == True) and abs(act_dists[1] - set_dists[1]) < dead_band_dist and act_dists[0] > set_dists[0] and act_dists[2] < set_dists[2] + bfr_dist:
                     #if encoder value says weve traveled 40 cm --> reset initial encoder value and update current location
                     if (BP.get_motor_encoder(BP.PORT_C) + BP.get_motor_encoder(BP.PORT_C)) / 2 < -(40 * (360/(7* pi))):
                         BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
@@ -108,23 +126,26 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                     gyro_output = gyro_kp * (gyro_error) + gyro_ki * (gyro_integ)        #PI feedback response
                     gyro_error_p = gyro_error
 
+                    # control signal
                     if(gyro_output >= 0):
                         setSpeed(BP, speed + gyro_output, speed) 
                     else:
                         setSpeed(BP, speed, speed - gyro_output)
                     
+                    # check for hazards and get new ultra distances
+                    if hazard_type == None:
+                        hazard_type, hazard_val =  hazardCheck(BP, imu_calib)
                     act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
-                    hazard_type, hazard_val =  hazardCheck(imu_calib)
 
                     time.sleep(gyro_dt)
                 dead_band_dist = .5   # reset deadband distance for ultrasonic controller
-
             else:    
                 integs = np.add(integs, (np.multiply(dt, np.divide(np.add(errors, errors_p), 2))))
 
                 outputs  = np.add(np.multiply(kp, errors), np.multiply(ki, integs))
                 errors_p = errors
 
+                # control signal
                 if sensor == Sensor.LEFT:
                     # apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
                     if(outputs[1] >= 0):
@@ -139,15 +160,19 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
                     # apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
                     else:
                         setSpeed(BP, speed - outputs[2], speed)  
-
-            act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle))) # cos(relative theta) of all ultrasonic distances
-            if hazard_type != None:
+            
+            # handle hazard one has not yet been encountered in this scope
+            if hazard_type != None and not has_encountered_haz:
                 setSpeed(BP,0,0)
+                print("Hazard located")
+
+                has_encountered_haz = True
                 cur_angle += 180
                 turnPi(BP,180)
 
                 map.addHazard(hazard_type,hazard_val)
-                map.cur_direc = Dir((map.cur_direc.value - 180 // 90) % 4)  # change current direction property based on turn_ang
+                map.cur_direc = Dir((map.cur_direc.value - 180 // 90) % 4)                # change current direction property based on turn_ang
+            act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle))) # cos(relative theta) of all ultrasonic distances
 
             time.sleep(.01)
         setSpeed(BP,0,0)
@@ -157,6 +182,7 @@ def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp,
         print("wallGuide:",error)
     except KeyboardInterrupt:
         stop(BP)
+        map.pushInfo()
 
 def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bfr_dist):
     try:
@@ -203,6 +229,44 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
         print("handleJunction:",error)
     except KeyboardInterrupt:
         stop(BP)
+        map.pushInfo()
+
+def exitJunction(map, set_dists, cur_angle, speed, bfr_dist, kp):
+    try:
+        act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
+        BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
+        while BP.get_motor_encoder(BP.PORT_C) > -(35 * (360/(7* pi))) and (act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist):
+            if act_dists[1] < set_dists[1] + bfr_dist:
+                errors = np.subtract(set_dists, act_dists)
+                outputs  = np.multiply(kp, errors)
+
+                # apprch right wall --> (-) error --> subtr (-) error to right w (^ spd) & add (-) error to left w (v spd) 
+                if(outputs[1] >= 0):
+                    setSpeed(BP, speed + outputs[1], speed) 
+                # apprch left wall --> (+) error --> subtr (+) error to right w (v spd) & add (+) error to left w (^ spd)
+                else:
+                    setSpeed(BP, speed, speed - outputs[1])
+            elif act_dists[2] < set_dists[2] + bfr_dist:
+                errors = np.subtract(set_dists, act_dists)
+                outputs  = np.multiply(kp, errors)
+
+                # apprch right wall --> (+) error --> add (+) error to right w (^ spd) & subtr (+) error to left w (v spd) 
+                if(outputs[2] >= 0):
+                    setSpeed(BP, speed, speed + outputs[2]) 
+                # apprch left wall --> (-) error --> add (-) error to right w (v spd) & subtr (-) error to left w (^ spd)
+                else:
+                    setSpeed(BP, speed - outputs[2], speed)  
+            else:
+                setSpeed(BP,speed,speed)
+            act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
+            time.sleep(.1)
+        map.updateLocation()
+        print("Update loc -- exiting junction")
+    except Exception as error: 
+        print("exitJunction:",error)
+    except KeyboardInterrupt:
+        stop(BP)
+        map.pushInfo()
 
 def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dist = 15,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
@@ -213,17 +277,21 @@ def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,b
         while True:
             # sweep to parallel with wall
             delt_ang = parallelToWall(BP, cur_angle, dtheta=30, sweep_spd = 2, sensor = sensor, dt = .05)
+            turnPi(BP,-5)               # fudge factor to correct oversweep
             printGyroVal(BP)
             print("delt_ang:",delt_ang)
-            cur_angle += delt_ang
+            cur_angle += delt_ang - 5
             
             cur_angle, act_dists = wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp, ki, gyro_kp, gyro_ki)
 
-            print("junction case reached\nfront: %d | left: %d | right: %d" % (act_dists[0],act_dists[1],act_dists[2]))
+            #travel extra distance to confirm junction type
             turnPi(BP,cur_angle - gyroVal(BP))
+            speedControl(BP,imu_calib,5,6)
+            act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle))) 
+            print("junction case reached\nfront: %d | left: %d | right: %d" % (act_dists[0],act_dists[1],act_dists[2]))
 
             # travel extra distance to ensure robot is in center of junction
-            speedControl(BP,imu_calib,speed,10)
+            speedControl(BP,imu_calib,speed,6)
             if not (act_dists[0] <= set_dists[0] + bfr_dist and act_dists[1] <= set_dists[1] + bfr_dist and act_dists[2] <= set_dists[2] + bfr_dist): 
                 map.updateLocation()
                 print("Update loc -- junction loc add")
@@ -232,17 +300,10 @@ def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,b
             cur_angle = handleJunction(map, set_dists, cur_angle, act_dists[0], act_dists[1], act_dists[2], bfr_dist) 
 
             # drive forward until exit junction (walls on each side and open ahead)
-            act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
-            BP.offset_motor_encoder(BP.PORT_C,BP.get_motor_encoder(BP.PORT_C))
-            while BP.get_motor_encoder(BP.PORT_C) > -(30 * (360/(7* pi))) and (act_dists[0] <= set_dists[0] or act_dists[1] >= set_dists[1] + bfr_dist or act_dists[2] >= set_dists[2] + bfr_dist):
-                setSpeed(BP,speed,speed)
-                act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle)))
-                time.sleep(.1)
-            map.updateLocation()
-            print("Update loc -- exiting junction")
+            exitJunction(map, set_dists, cur_angle, speed, bfr_dist, kp)
 
-            # out of maze if traveled more than 50 cm to exit junction
-            if BP.get_motor_encoder(BP.PORT_C) <= -(30 * (360/(7* pi))):
+            # out of maze if traveled more than 35 cm to exit junction
+            if BP.get_motor_encoder(BP.PORT_C) <= -(35 * (360/(7* pi))):
                 setSpeed(BP,0,0)
                 print("Exited maze")
                 break
@@ -457,7 +518,7 @@ if __name__ == '__main__':
     # speedControl(BP,imu_calib,12,200)
     #########################################
 
-    set_dists = [20,10,10]
+    set_dists = [18,10,10]
     maze_map = createMap(Dir.UP)
     
     mapMaze(BP, maze_map, imu_calib, 10, set_dists, direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
