@@ -236,6 +236,8 @@ def imuMagTest():
             mag_y = mag['y']
             mag_z = mag['z']
             print("x: %f  y: %f  z: %f" % (mag_x,mag_y,mag_z))
+            print("Magnitude: %f" % (math.sqrt(mag_x**2 + mag_y**2 + mag_z**2)))
+
             time.sleep(.25)
         return mag
     except Exception as error: 

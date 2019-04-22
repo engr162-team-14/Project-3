@@ -35,10 +35,11 @@ class Hazard(Enum):
 def stop(BP):
     BP.set_motor_dps(BP.PORT_B, 0)
     BP.set_motor_dps(BP.PORT_C, 0) 
-    BP.set_motor_dps(BP.PORT_A, 0)  
+    BP.set_motor_dps(BP.PORT_D, 0)  
     BP.offset_motor_encoder(BP.PORT_B, BP.get_motor_encoder(BP.PORT_B))
     BP.offset_motor_encoder(BP.PORT_C, BP.get_motor_encoder(BP.PORT_C))
-    BP.offset_motor_encoder(BP.PORT_A, BP.get_motor_encoder(BP.PORT_D))
+
+    BP.set_motor_position(BP.PORT_D, 0)
 
     BP.set_sensor_type(BP.PORT_1, BP.SENSOR_TYPE.EV3_GYRO_ABS_DPS)
     BP.set_sensor_type(BP.PORT_3, BP.SENSOR_TYPE.EV3_ULTRASONIC_CM)
@@ -192,8 +193,8 @@ def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEF
         cur_dist = leftUltraVal(BP)
         if sensor == Sensor.LEFT:
             while cur_ang <= (init_ang + dtheta):
-                # print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
-                #     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                print("C || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
                 if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
@@ -207,8 +208,8 @@ def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEF
             cur_ang = gyroVal(BP)
             cur_dist = leftUltraVal(BP)
             while cur_ang >= (init_ang - dtheta):
-                # print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
-                #     % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
+                print("CC || cur_ang: %f | init_ang: %f | target_angle: %f | cur_dist: %f | min_dist: %f" \
+                    % (cur_ang,init_ang,targ_angle,cur_dist,min_dist))
                 if cur_dist >= 3 and cur_dist < min_dist:
                     min_dist = cur_dist
                     targ_angle = cur_ang
@@ -218,8 +219,10 @@ def parallelToWall(BP, init_ang, dtheta = 30, sweep_spd = 2, sensor = Sensor.LEF
                 cur_dist = leftUltraVal(BP)
                 time.sleep(dt)
             setSpeed(BP,0,0)
+            time.sleep(.2)
         
-        turnPi(BP, targ_angle - gyroVal(BP),.075,0.0,0)
+        turnPi(BP, targ_angle - gyroVal(BP),.1,0.0,0)
+        print("current deg: %d  |    target deg: %d" % (gyroVal(BP), targ_angle))
 
         return targ_angle - init_ang
 
@@ -356,26 +359,27 @@ def pt_2_pt (BP, imu_calib, speed, pt_1, pt_2, length_conv = 40, haz_mode = Haza
     except KeyboardInterrupt:
         stop(BP)  
 
-def cargoRelease(BP, imu_calib):
+def cargoRelease(BP, imu_calib, theta = 100):
     try:
-        ultraVals = getUltras(BP)
-        if ultraVals[0] >= 40 and ultraVals[1] >= 40 and ultraVals[2] >= 40:
-            print("I have arrived")
-            val = BP.get_motor_encoder(BP.PORT_A)
-            theta = val + 2300
-            BP.set_motor_position(BP.PORT_A, theta)
-            time.sleep(1.5)
-            speedControl(BP, imu_calib ,5,10)
-            BP.set_motor_position(BP.PORT_A, val)
-        else:
-            print("I have not arrived")
-            print(ultraVals)
+        cur_val = BP.get_motor_encoder(BP.PORT_D)
+        target = cur_val + theta
+        BP.set_motor_position(BP.PORT_D, target)
+        time.sleep(1)
+
+        speedControl(BP,imu_calib,5,10)
+        print("Cargo is ready for pick up!")
+        while True:
+            BP.set_motor_position(BP.PORT_D, cur_val)
+            time.sleep(.2)
+            BP.set_motor_position(BP.PORT_D, cur_val + target / 2)
+            time.sleep(.2)
+
     except Exception as error:
         print("cargoRelease: ", error)
     except KeyboardInterrupt:
         stop(BP)
 
-def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 40, mag_thresh_stationary = 75):
+def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 58, mag_thresh_stationary = 60):
     '''
     Description: Checks for hazards directly in front of robot given sensor thresholds \n 
     Return value: hazardCheck returns [ hazard_type, hazard_val ] \n

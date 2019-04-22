@@ -44,6 +44,9 @@ def calibrate(BP):
                hazard_type -- Dictionary that holds calibration
                               data for each sensor component of imu
     '''
+    BP.offset_motor_encoder(BP.PORT_D,BP.get_motor_encoder(BP.PORT_D))
+    BP.set_motor_position(BP.PORT_D, 0)
+
     gyroCalib(BP)
     leftUltraCalib(BP)
     irCalib()
@@ -190,7 +193,7 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
         #dead end
         if cur_front <= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
             turn_ang = 180
-            speedControl(BP,imu_calib,-5,5)
+            speedControl(BP,imu_calib,-10,5)
             print("dead end")
         #left option only
         elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
@@ -277,21 +280,19 @@ def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,b
         while True:
             # sweep to parallel with wall
             delt_ang = parallelToWall(BP, cur_angle, dtheta=30, sweep_spd = 2, sensor = sensor, dt = .05)
-            turnPi(BP,-5)               # fudge factor to correct oversweep
+
             printGyroVal(BP)
             print("delt_ang:",delt_ang)
-            cur_angle += delt_ang - 5
+            cur_angle += delt_ang
             
             cur_angle, act_dists = wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp, ki, gyro_kp, gyro_ki)
 
-            #travel extra distance to confirm junction type
+            #travel extra distance to confirm robot is in junction  and confirm junction type
             turnPi(BP,cur_angle - gyroVal(BP))
-            speedControl(BP,imu_calib,5,6)
+            speedControl(BP,imu_calib,speed,15)
             act_dists = np.multiply(getUltras(BP), cos(radians(gyroVal(BP) - cur_angle))) 
             print("junction case reached\nfront: %d | left: %d | right: %d" % (act_dists[0],act_dists[1],act_dists[2]))
 
-            # travel extra distance to ensure robot is in center of junction
-            speedControl(BP,imu_calib,speed,6)
             if not (act_dists[0] <= set_dists[0] + bfr_dist and act_dists[1] <= set_dists[1] + bfr_dist and act_dists[2] <= set_dists[2] + bfr_dist): 
                 map.updateLocation()
                 print("Update loc -- junction loc add")
@@ -518,7 +519,7 @@ if __name__ == '__main__':
     # speedControl(BP,imu_calib,12,200)
     #########################################
 
-    set_dists = [18,10,10]
+    set_dists = [20,10,10]
     maze_map = createMap(Dir.UP)
     
     mapMaze(BP, maze_map, imu_calib, 10, set_dists, direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)

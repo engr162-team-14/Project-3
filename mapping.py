@@ -247,21 +247,21 @@ class Map:
             }
             with open('map_' + str(self.map_num) + '.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow("Team: %d" % (self.team))
-                writer.writerow("Map: %d" % (self.map_num))
-                writer.writerow("Unit length: %d" % (self.unit_length))
-                writer.writerow("Unit length: %s" % (self.unit.name))
-                writer.writerow("Origin: (%d,%d)" % (self.origin[0], self.origin[1]))
-                writer.writerow("Notes: %s" % (self.notes))
+                writer.writerow(["Team:", (self.team)])
+                writer.writerow(["Map:", (self.map_num)])
+                writer.writerow(["Unit length:", (self.unit_length)])
+                writer.writerow(["Unit length:", (self.unit.name)])
+                writer.writerow(["Origin:","(",self.origin[0],self.origin[1],")"])
+                writer.writerow(["Notes:", (self.notes)])
                 writer.writerow("")
 
                 writer.writerows(info["map"])
 
             with open('hazards.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow("Team: %d" % (self.team))
-                writer.writerow("Map: %d" % (self.map_num))
-                writer.writerow("Notes: %s" % (self.notes))
+                writer.writerow(["Team:", (self.team)])
+                writer.writerow(["Map:", (self.map_num)])
+                writer.writerow(["Notes:", (self.notes)])
                 writer.writerow("")
 
                 writer.writerows(info["hazard table"])    
