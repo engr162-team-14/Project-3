@@ -230,6 +230,25 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
         turnPi(BP,turn_ang)
         map.cur_direc = Dir((map.cur_direc.value + turn_ang // 90) % 4)  # change current direction property based on turn_ang
 
+        '''  ****UNTESTED****
+        hazard_type, hazard_val =  hazardCheck(imu_calib)
+        if hazard_type != None:
+            if turn_ang == 0:
+                cur_front = 0
+            elif turn_ang == 90:
+                cur_right = 0
+            elif turn_ang == -90:
+                cur_left = 0
+            else:
+                print("Error: hazard detected and unable to reavaluate path")
+
+            cur_angle -= turn_ang
+            turnPi(BP,-turn_ang)
+
+            map.addHazard(hazard_type,hazard_val)
+            map.cur_direc = Dir((map.cur_direc.value - turn_ang // 90) % 4)  # change current direction property based on turn_ang
+        '''
+
         return cur_angle
     except Exception as error: 
         print("handleJunction:",error)
