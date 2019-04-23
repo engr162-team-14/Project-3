@@ -206,6 +206,7 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
         #right and left options
         elif cur_front <= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
             turn_ang = 90
+            # Demo version --> turn_ang = - 90
             print("right and left options")
         #left and forward
         elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right <= set_dists[2] + bfr_dist:
@@ -214,10 +215,12 @@ def handleJunction(map, set_dists, cur_angle, cur_front, cur_left, cur_right, bf
         #right and forward
         elif cur_front >= set_dists[0] + bfr_dist and cur_left <= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
             turn_ang = 90
+            # Demo version --> turn_ang = 0
             print("right and forward options")
         #4 way intersection
         elif cur_front >= set_dists[0] + bfr_dist and cur_left >= set_dists[1] + bfr_dist and cur_right >= set_dists[2] + bfr_dist:
             turn_ang = 90
+            # Demo version --> turn_ang = - 90
             print("4 way intersection")
         else:
             turn_ang = 0
@@ -271,7 +274,7 @@ def exitJunction(map, set_dists, cur_angle, speed, bfr_dist, kp):
         stop(BP)
         map.pushInfo()
 
-def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dist = 15,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
+def mapMaze(BP, map, imu_calib,speed,set_dists,direc = Dir.UP,kp = .4,ki = .01,bfr_dist = 20,gyro_kp = .2,gyro_ki = 0.0,sensor = Sensor.LEFT):
     '''set_dists = [front sensor stop dist, left sensor set pt, right senor set pt]'''
     try:
         cur_angle = gyroVal(BP)
@@ -511,16 +514,22 @@ if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
 
-    ############ Sensor Tests ###############
+    ############ Calibration Tests ###############
     # gyroTest(BP)
     # ultrasTest(BP)
     # imuMagTest()
     # irTest()
     # speedControl(BP,imu_calib,12,200)
+
+    # x_mag, pos = speedControl(BP, imu_calib, 5, 300, haz_mode=Hazard.CHECK_HAZARDS)
+    # print("Hazard magnitude",x_mag)
+    # print("Distance traveled",pos)
+
+    # delt_ang = parallelToWall(BP, 0, dtheta=30, sweep_spd = 2, sensor = Sensor.LEFT, dt = .05)
     #########################################
 
     set_dists = [20,10,10]
     maze_map = createMap(Dir.UP)
     
     mapMaze(BP, maze_map, imu_calib, 10, set_dists, direc=Dir.UP, kp=.5, ki=0.00 ,sensor=Sensor.LEFT)
-    # cargoRelease(BP, imu_calib)
+    cargoRelease(BP, imu_calib)

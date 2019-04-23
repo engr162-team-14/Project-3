@@ -117,10 +117,12 @@ def speedControl(BP,imu_calib,speed,distance,kp = .2,ki = .025,pos = 0,haz_mode 
         while distance > pos:
             start_time = time.time()
 
-            #if looking for hazards and there is 
-            if haz_mode == Hazard.CHECK_HAZARDS and hazardCheck(BP, imu_calib):
-                setSpeed(BP,0,0)
-                return pos
+            #if looking for hazards
+            if haz_mode == Hazard.CHECK_HAZARDS:
+                haz_type, x_mag = hazardCheck(BP, imu_calib,calib=1)
+                if haz_type != None:
+                    setSpeed(BP,0,0)
+                    return x_mag, pos
 
             error = eq_deg - gyroVal(BP)                #error = system (gyro) dev from desired state (target_deg)
             integ = integ + (dt * (error + error_p)/2)  #integral feedback (trapez approx)
@@ -379,7 +381,8 @@ def cargoRelease(BP, imu_calib, theta = 100):
     except KeyboardInterrupt:
         stop(BP)
 
-def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 58, mag_thresh_stationary = 60):
+##TODO: mov_thresh at 10 - 15 in away  |  stationary_thresh 10 in away reading
+def hazardCheck(BP, imu_calib, ir_thresh = 30 ,x_thresh_mov = 7, x_thresh_stationary = -5, calib = 0):
     '''
     Description: Checks for hazards directly in front of robot given sensor thresholds \n 
     Return value: hazardCheck returns [ hazard_type, hazard_val ] \n
@@ -399,20 +402,23 @@ def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 58, mag_thresh_s
             print("Found IR Hazard")
             setSpeed(BP,0,0)
             haz_ir_val = irVal()
+
             if haz_ir_val[0] >= ir_thresh or haz_ir_val[1] >= ir_thresh:
                 haz = State.HEAT
                 magnitude = (haz_ir_val[0] + haz_ir_val[1]) / 2
             else:
                 haz = None
                 magnitude = None
-        elif mag_curr >= mag_thresh_mov:
+        ##TODO: May need to change (>= or <=) depending on magnet orientation
+        elif mag_val[0] <= x_thresh_mov:
             print("Found Mag Hazard")
             setSpeed(BP,0,0)
             time.sleep(.75)
             haz_mag_val = imuMagFiltered(imu_calib)
-            haz_mag_curr = math.sqrt(haz_mag_val[0]**2 + haz_mag_val[1]**2 + haz_mag_val[2]**2)
             print("haz_mag_cur:",mag_curr)
-            if haz_mag_curr > mag_thresh_stationary:
+
+            ##TODO: May need to change (> or <) depending on magnet orientation
+            if haz_mag_val[0] <= x_thresh_stationary:
                 haz = State.MAG
                 magnitude = math.sqrt(haz_mag_val[0]**2 + haz_mag_val[1]**2 + haz_mag_val[2]**2)
             else:
@@ -422,6 +428,9 @@ def hazardCheck(BP, imu_calib, ir_thresh = 34 ,mag_thresh_mov = 58, mag_thresh_s
             haz = None
             magnitude = None
                 
-        return [haz, magnitude]
+        if calib == 1:
+            return [haz, imuMagFiltered(imu_calib)[0]]
+        else:
+            return [haz, magnitude]
     except Exception as error:
         print("hazardCheck: ", error)

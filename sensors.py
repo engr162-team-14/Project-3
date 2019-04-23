@@ -270,7 +270,8 @@ def irTest(pin1 = 14, pin2 = 15):
             sensor1_value = grovepi.analogRead(pin1)
             sensor2_value = grovepi.analogRead(pin2)
             
-            print ("One = " + str(sensor1_value) + "\tTwo = " + str(sensor2_value))
+            print("One = " + str(sensor1_value) + "\tTwo = " + str(sensor2_value))
+            print("Avg = %d" % ((sensor1_value + sensor2_value) / 2))
             time.sleep(.1)
 
     except Exception as error: 

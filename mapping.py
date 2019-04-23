@@ -245,7 +245,7 @@ class Map:
             info = {"map": self.grid,
                     "hazard table": self.hazard_info 
             }
-            with open('map_' + str(self.map_num) + '.csv', 'w', newline='') as csvfile:
+            with open('team14_map.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Team:", (self.team)])
                 writer.writerow(["Map:", (self.map_num)])
@@ -257,7 +257,7 @@ class Map:
 
                 writer.writerows(info["map"])
 
-            with open('hazards.csv', 'w', newline='') as csvfile:
+            with open('team14_hazards.csv', 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Team:", (self.team)])
                 writer.writerow(["Map:", (self.map_num)])
