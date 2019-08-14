@@ -434,3 +434,8 @@ def hazardCheck(BP, imu_calib, ir_thresh = 30 ,x_thresh_mov = 7, x_thresh_statio
             return [haz, magnitude]
     except Exception as error:
         print("hazardCheck: ", error)
+
+def hazardTest(BP, imu_calib):
+    x_mag, pos = speedControl(BP, imu_calib, 5, 300, haz_mode=Hazard.CHECK_HAZARDS)
+    print("Hazard magnitude",x_mag)
+    print("Distance traveled",pos)

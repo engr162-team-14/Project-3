@@ -17,6 +17,7 @@ from movement import cargoRelease
 from movement import stop
 from movement import Sensor
 from movement import hazardCheck
+from movement import hazardTest
 
 from sensors import gyroCalib
 from sensors import gyroVal
@@ -63,7 +64,21 @@ def calibrate(BP):
         "std": calib[7]
     }
 
-    return imu_calib
+    test_dict = {
+        "gyro": gyroTest(BP),
+        "ultras": ultrasTest(BP),
+        "mag": imuMagTest(),
+        "ir": irTest(),
+        "speedControl": speedControl(BP,imu_calib,12,200),
+        "hazard": hazardTest(BP,imu_calib),
+        "sweep": parallelToWall(BP, 0, dtheta=30, sweep_spd = 2, sensor = Sensor.LEFT, dt = .05)
+    }
+    test = input("Enter the name of the sensor test you would like to run (hit ENTER to pass): ")
+
+    if test == '':
+        return imu_calib
+    else:
+        return test_dict[test]
 
 def wallGuide(map, cur_angle, act_dists, set_dists, bfr_dist, sensor, speed, kp, ki, gyro_kp, gyro_ki):
     '''
@@ -532,20 +547,6 @@ def createMap(direc):
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
     imu_calib = calibrate(BP)
-
-    ############ Calibration Tests ###############
-    # gyroTest(BP)
-    # ultrasTest(BP)
-    # imuMagTest()
-    # irTest()
-    # speedControl(BP,imu_calib,12,200)
-
-    # x_mag, pos = speedControl(BP, imu_calib, 5, 300, haz_mode=Hazard.CHECK_HAZARDS)
-    # print("Hazard magnitude",x_mag)
-    # print("Distance traveled",pos)
-
-    # delt_ang = parallelToWall(BP, 0, dtheta=30, sweep_spd = 2, sensor = Sensor.LEFT, dt = .05)
-    #########################################
 
     set_dists = [20,10,10]
     maze_map = createMap(Dir.UP)

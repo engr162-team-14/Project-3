@@ -145,7 +145,6 @@ def test_addHazard():
 
 if __name__ == '__main__':
     BP = brickpi3.BrickPi3()
-    # imu_calib = calibrate(BP)    
     
     mu_run(test__setPoint)
     mu_run(test__getPoint)

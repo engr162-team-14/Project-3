@@ -1,11 +1,19 @@
 import inspect
 
-"""This provides a lineno() function to make it easy to grab the line
+"""
+This provides a lineno() function to make it easy to grab the line
 number that we're on. Danny Yoo (dyoo@hkn.eecs.berkeley.edu)
 """
+# CODE FROM EXTERNAL SOURCE
+# Source: https://gisstudio.wordpress.com/2013/04/30/an-easy-way-to-get-the-line-number-of-your-python-code/
+#         Danny Yoo | (dyoo@hkn.eecs.berkeley.edu)
+# Date Accessed: 4/19/2019
+# This provides a lineno() function to make it easy to grab the line number that we're on.
 def lineno():
     """Returns the current line number in our program."""
     return inspect.currentframe().f_back.f_lineno
+# END CODE FROM EXTERNAL SOURCE
+
 
 def mu_run(test_func):
     line_fail = test_func()
